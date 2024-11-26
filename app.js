@@ -1,8 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const logger = require("morgan");
 const createError = require("http-errors");
+const db = require("./models");
 
 const indexRouter = require("./routes/index");
+
+// Sync database
+db.sequelize.sync({ force: false });
 
 const app = express();
 
