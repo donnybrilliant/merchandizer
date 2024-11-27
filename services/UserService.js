@@ -31,6 +31,16 @@ class UserService {
     });
   }
 
+  // Update user
+  async update(id, data) {
+    const rowsUpdated = await this.User.update(data, {
+      where: { id },
+    });
+
+    if (rowsUpdated[0] === 0) return null;
+
+    return await this.getById(id);
+  }
 }
 
 module.exports = UserService;
