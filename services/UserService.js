@@ -11,6 +11,13 @@ class UserService {
     });
   }
 
+  // Get user by id
+  async getById(id) {
+    return await this.User.findByPk(id, {
+      attributes: { exclude: ["encryptedPassword", "salt"] },
+    });
+  }
+
   // Create user
   async create(user) {
     const { firstName, lastName, email, encryptedPassword, salt } = user;
