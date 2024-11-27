@@ -5,7 +5,7 @@ class UserService {
   }
 
   // Get user by email
-  async getOne(email) {
+  async getByEmail(email) {
     return await this.User.findOne({
       where: { email },
     });
