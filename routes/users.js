@@ -5,7 +5,7 @@ const UserService = require("../services/UserService");
 const userService = new UserService(db);
 const multer = require("multer");
 const sharp = require("sharp");
-const isAuth = require("../middleware/auth");
+const { isAuth } = require("../middleware/auth");
 const { validatePhoneNumber } = require("../middleware/validation");
 
 router.use(isAuth);
