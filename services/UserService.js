@@ -46,6 +46,14 @@ class UserService {
   async delete(id) {
     return await this.User.destroy({ where: { id } });
   }
+
+  // Change password
+  async changePassword(id, newHashedPassword, salt) {
+    return await this.User.update(
+      { encryptedPassword: newHashedPassword, salt },
+      { where: { id } }
+    );
+  }
 }
 
 module.exports = UserService;
