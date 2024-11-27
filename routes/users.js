@@ -25,6 +25,7 @@ router.get("/me", async (req, res, next) => {
     next(err);
   }
 });
+
 // Update current user
 router.put("/me", validatePhoneNumber, async (req, res, next) => {
   const { firstName, lastName, phone } = req.body;
@@ -58,6 +59,28 @@ router.put("/me", validatePhoneNumber, async (req, res, next) => {
       success: true,
       message: "Profile updated successfully",
       data: updatedUser,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Delete current user
+router.delete("/me", async (req, res, next) => {
+  // this needs to be updated, as a transaction to remove associated data
+  const userId = req.user.id;
+
+  try {
+    const user = await userService.getById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    await userService.delete(userId);
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
     });
   } catch (err) {
     next(err);
