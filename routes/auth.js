@@ -11,7 +11,7 @@ const { validateLogin, validateRegister } = require("../middleware/validation");
 router.post("/login", validateLogin, async (req, res, next) => {
   const { email, password } = req.body;
   try {
-    const user = await userService.getOne(email);
+    const user = await userService.getByEmail(email);
 
     if (!user) {
       return res
@@ -63,7 +63,7 @@ router.post("/register", validateRegister, async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
 
   try {
-    const existingUser = await userService.getOne(email);
+    const existingUser = await userService.getByEmail(email);
 
     if (existingUser) {
       return res.status(409).json({
