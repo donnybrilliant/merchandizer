@@ -30,7 +30,7 @@ const validateRegister = [
     .notEmpty()
     .withMessage("Password is required")
     .isLength({ min: 8 })
-    .withMessage("Password must be at least 6 characters long"),
+    .withMessage("Password must be at least 8 characters long"),
   handleValidationErrors,
 ];
 
@@ -38,8 +38,18 @@ const validatePhoneNumber = [
   check("phone").isMobilePhone("any").withMessage("Invalid phone number"),
 ];
 
+const validateNewPassword = [
+  check("oldPassword").notEmpty().withMessage("Old password is required"),
+  check("newPassword")
+    .notEmpty()
+    .withMessage("New password is required")
+    .isLength({ min: 8 })
+    .withMessage("New password must be at least 8 characters long"),
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
   validatePhoneNumber,
+  validateNewPassword,
 };
