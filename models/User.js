@@ -30,13 +30,12 @@ module.exports = (sequelize, Sequelize) => {
   });
 
   User.associate = function (models) {
-    User.belongsTo(models.Role, {
-      foreignKey: {
-        name: "roleId",
-      },
-    });
     User.belongsToMany(models.Tour, {
-      through: "UserTour",
+      through: models.UserRoleTour,
+      foreignKey: "userId",
+    });
+    User.belongsToMany(models.Role, {
+      through: models.UserRoleTour,
       foreignKey: "userId",
     });
   };
