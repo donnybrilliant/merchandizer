@@ -90,4 +90,54 @@ router.post("/register", validateRegister, async (req, res, next) => {
   }
 });
 
+// Change password route
+router.patch("/users/me/password", isAuth, async (req, res, next) => {
+  const { oldPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({
+      success: false,
+      error: "Both oldPassword and newPassword are required",
+    });
+  }
+
+  try {
+    const user = await userService.getByEmail(req.user.email);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    // Verify old password
+    const { hashedPassword: oldHashedPassword } = await hashPassword(
+      oldPassword,
+      user.salt
+    );
+    if (!crypto.timingSafeEqual(user.encryptedPassword, oldHashedPassword)) {
+      return res.status(400).json({
+        success: false,
+        error: "Incorrect old password",
+      });
+    }
+
+    // Hash the new password
+    const { hashedPassword: newHashedPassword, salt: newSalt } =
+      await hashPassword(newPassword);
+
+    // Update the password
+    await userService.changePassword(userId, newHashedPassword, newSalt);
+
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
