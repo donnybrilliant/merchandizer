@@ -5,20 +5,11 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const UserService = require("../services/UserService");
 const userService = new UserService(db);
+const { validateLogin, validateRegister } = require("../middleware/validation");
 
 // Login Route
-router.post("/login", async (req, res, next) => {
+router.post("/login", validateLogin, async (req, res, next) => {
   const { email, password } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ success: false, error: "Email is required" });
-  }
-  if (!password) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Password is required" });
-  }
-
   try {
     const user = await userService.getOne(email);
 
@@ -68,27 +59,8 @@ router.post("/login", async (req, res, next) => {
 });
 
 // Register Route
-router.post("/register", async (req, res, next) => {
+router.post("/register", validateRegister, async (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
-
-  if (!firstName) {
-    return res
-      .status(400)
-      .json({ success: false, error: "First name is required" });
-  }
-  if (!lastName) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Last name is required" });
-  }
-  if (!email) {
-    return res.status(400).json({ success: false, error: "Email is required" });
-  }
-  if (!password) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Password is required" });
-  }
 
   try {
     const existingUser = await userService.getOne(email);
