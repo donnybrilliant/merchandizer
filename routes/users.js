@@ -4,6 +4,7 @@ const db = require("../models");
 const UserService = require("../services/UserService");
 const userService = new UserService(db);
 const multer = require("multer");
+const sharp = require("sharp");
 const isAuth = require("../middleware/auth");
 const { validatePhoneNumber } = require("../middleware/validation");
 
@@ -93,7 +94,7 @@ router.delete("/me", async (req, res, next) => {
 
 // Multer setup for avatar uploads
 const upload = multer({
-  limits: { fileSize: 1 * 1024 * 1024 },
+  limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new Error("Only image files are allowed"));
@@ -105,7 +106,6 @@ const upload = multer({
 // Update user avatar
 router.patch("/me/avatar", upload.single("avatar"), async (req, res, next) => {
   const userId = req.user.id;
-  console.log("Uploaded file:", req.file);
 
   if (!req.file) {
     return res.status(400).json({
@@ -115,8 +115,17 @@ router.patch("/me/avatar", upload.single("avatar"), async (req, res, next) => {
   }
 
   try {
-    // Update user's avatar
-    const updateData = { avatar: req.file.buffer };
+    // Resize and convert the image to PNG
+    const resizedBuffer = await sharp(req.file.buffer)
+      .resize(300, 300)
+      .png()
+      .toBuffer();
+
+    // Update user's avatar and MIME type
+    const updateData = {
+      avatar: resizedBuffer,
+    };
+
     const updatedUser = await userService.update(userId, updateData);
 
     if (!updatedUser) {
