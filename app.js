@@ -5,6 +5,7 @@ const createError = require("http-errors");
 const db = require("./models");
 
 const indexRouter = require("./routes/index");
+const authRouter = require("./routes/auth");
 
 // Sync database
 db.sequelize.sync({ force: false });
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/", indexRouter);
+app.use("/", authRouter);
 
 // Error handling
 app.use(function (req, res, next) {
