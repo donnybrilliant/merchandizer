@@ -41,6 +41,11 @@ class UserService {
 
     return await this.getById(id);
   }
+
+  // Delete user
+  async delete(id) {
+    return await this.User.destroy({ where: { id } });
+  }
 }
 
 module.exports = UserService;
