@@ -34,7 +34,12 @@ const validateRegister = [
   handleValidationErrors,
 ];
 
+const validatePhoneNumber = [
+  check("phone").isMobilePhone("any").withMessage("Invalid phone number"),
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
+  validatePhoneNumber,
 };
