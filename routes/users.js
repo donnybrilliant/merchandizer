@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const db = require("../models");
 const UserService = require("../services/UserService");
-const isAuth = require("../middleware/auth");
 const userService = new UserService(db);
+const multer = require("multer");
+const isAuth = require("../middleware/auth");
 const { validatePhoneNumber } = require("../middleware/validation");
 
 router.use(isAuth);
@@ -19,7 +20,10 @@ router.get("/me", async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      data: user,
+      data: {
+        ...user.toJSON(),
+        avatar: user.avatar ? "/users/me/avatar" : null,
+      },
     });
   } catch (err) {
     next(err);
@@ -27,7 +31,7 @@ router.get("/me", async (req, res, next) => {
 });
 
 // Update current user
-router.put("/me", validatePhoneNumber, async (req, res, next) => {
+router.patch("/me", validatePhoneNumber, async (req, res, next) => {
   const { firstName, lastName, phone } = req.body;
   const userId = req.user.id;
 
@@ -82,6 +86,71 @@ router.delete("/me", async (req, res, next) => {
       success: true,
       message: "Account deleted successfully",
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Multer setup for avatar uploads
+const upload = multer({
+  limits: { fileSize: 1 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
+// Update user avatar
+router.patch("/me/avatar", upload.single("avatar"), async (req, res, next) => {
+  const userId = req.user.id;
+  console.log("Uploaded file:", req.file);
+
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      error: "No avatar file provided",
+    });
+  }
+
+  try {
+    // Update user's avatar
+    const updateData = { avatar: req.file.buffer };
+    const updatedUser = await userService.update(userId, updateData);
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Avatar updated successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get avatar
+router.get("/me/avatar", async (req, res, next) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await userService.getById(userId);
+
+    if (!user || !user.avatar) {
+      return res.status(404).json({
+        success: false,
+        error: "Avatar not found",
+      });
+    }
+
+    res.set("Content-Type", "image/png");
+    return res.send(user.avatar);
   } catch (err) {
     next(err);
   }
