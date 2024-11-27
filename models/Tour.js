@@ -32,7 +32,11 @@ module.exports = (sequelize, Sequelize) => {
       foreignKey: "tourId",
     });
     Tour.belongsToMany(models.User, {
-      through: "UserTour",
+      through: models.UserRoleTour,
+      foreignKey: "tourId",
+    });
+    Tour.belongsToMany(models.Role, {
+      through: models.UserRoleTour,
       foreignKey: "tourId",
     });
   };
