@@ -1,5 +1,3 @@
-// models/User.js
-
 module.exports = (sequelize, Sequelize) => {
   const User = sequelize.define("User", {
     firstName: {
@@ -19,7 +17,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.DataTypes.STRING,
     },
     avatar: {
-      type: Sequelize.DataTypes.BLOB,
+      type: Sequelize.DataTypes.BLOB("medium"),
     },
     encryptedPassword: {
       type: Sequelize.DataTypes.BLOB,
@@ -35,7 +33,6 @@ module.exports = (sequelize, Sequelize) => {
     User.belongsTo(models.Role, {
       foreignKey: {
         name: "roleId",
-        allowNull: false,
       },
     });
     User.belongsToMany(models.Tour, {

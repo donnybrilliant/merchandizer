@@ -6,6 +6,7 @@ const db = require("./models");
 
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
+const usersRouter = require("./routes/users");
 
 // Sync database
 db.sequelize.sync({ force: false });
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/", indexRouter);
 app.use("/", authRouter);
+app.use("/users", usersRouter);
 
 // Error handling
 app.use(function (req, res, next) {
