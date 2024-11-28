@@ -18,6 +18,13 @@ class UserService {
     });
   }
 
+  // Get all users
+  async getAll() {
+    return await this.User.findAll({
+      attributes: { exclude: ["encryptedPassword", "salt", "avatar"] },
+    });
+  }
+
   // Create user
   async create(user) {
     const { firstName, lastName, email, encryptedPassword, salt } = user;
@@ -36,9 +43,7 @@ class UserService {
     const rowsUpdated = await this.User.update(data, {
       where: { id },
     });
-
     if (rowsUpdated[0] === 0) return null;
-
     return await this.getById(id);
   }
 
