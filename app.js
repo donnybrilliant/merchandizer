@@ -11,6 +11,7 @@ const artistsRouter = require("./routes/artists");
 const toursRouter = require("./routes/tours");
 const showsRouter = require("./routes/shows");
 const categoriesRouter = require("./routes/categories");
+const productsRouter = require("./routes/products");
 
 // Sync database
 db.sequelize.sync({ force: false });
@@ -28,6 +29,7 @@ app.use("/artists", artistsRouter);
 app.use("/tours", toursRouter);
 app.use("/shows", showsRouter);
 app.use("/categories", categoriesRouter);
+app.use("/products", productsRouter);
 
 // Error handling
 app.use(function (req, res, next) {
