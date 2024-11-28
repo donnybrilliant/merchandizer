@@ -27,14 +27,15 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.DataTypes.BLOB,
       allowNull: false,
     },
+    role: {
+      type: Sequelize.DataTypes.ENUM("admin", "user"),
+      allowNull: false,
+      defaultValue: "user",
+    },
   });
 
   User.associate = function (models) {
     User.belongsToMany(models.Tour, {
-      through: models.UserRoleTour,
-      foreignKey: "userId",
-    });
-    User.belongsToMany(models.Role, {
       through: models.UserRoleTour,
       foreignKey: "userId",
     });
