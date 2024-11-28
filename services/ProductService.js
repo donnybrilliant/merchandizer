@@ -11,14 +11,29 @@ class ProductService {
   // Get all products
   async getAll() {
     return await this.Product.findAll({
-      include: [{ model: this.Category, attributes: ["id", "name"] }],
+      include: [
+        {
+          model: this.Category,
+          attributes: ["id", "name"],
+          model: this.Artist,
+          attributes: ["name"],
+        },
+      ],
+      attributes: { exclude: ["image"] },
     });
   }
 
   // Get product by id
   async getById(id) {
     return await this.Product.findByPk(id, {
-      include: [{ model: this.Category, attributes: ["id", "name"] }],
+      include: [
+        {
+          model: this.Category,
+          attributes: ["id", "name"],
+          model: this.Artist,
+          attributes: ["name"],
+        },
+      ],
     });
   }
 
