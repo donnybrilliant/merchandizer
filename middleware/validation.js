@@ -50,6 +50,33 @@ const validateArtist = [
   check("name").notEmpty().withMessage("Name is required"),
   handleValidationErrors,
 ];
+// Tour validation
+const validateTour = [
+  check("name").notEmpty().withMessage("Tour name is required"),
+  check("startDate")
+    .notEmpty()
+    .withMessage("Start date is required")
+    .isISO8601()
+    .withMessage("Start date must be a valid date (YYYY-MM-DD)"),
+  check("endDate")
+    .notEmpty()
+    .withMessage("End date is required")
+    .isISO8601()
+    .withMessage("End date must be a valid date (YYYY-MM-DD)")
+    .custom((endDate, { req }) => {
+      const startDate = req.body.startDate;
+      if (new Date(endDate) < new Date(startDate)) {
+        throw new Error("End date must be after start date");
+      }
+      return true;
+    }),
+  check("artistId")
+    .notEmpty()
+    .withMessage("Artist ID is required")
+    .isInt()
+    .withMessage("Artist ID must be an integer"),
+  handleValidationErrors,
+];
 ];
 
 module.exports = {
