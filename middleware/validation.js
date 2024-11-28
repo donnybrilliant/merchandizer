@@ -166,6 +166,78 @@ const validateCategory = [
   handleValidationErrors,
 ];
 
+// Product validation
+const validateProduct = [
+  check("name")
+    .notEmpty()
+    .withMessage("Product name is required")
+    .isLength({ max: 100 })
+    .withMessage("Product name must not exceed 100 characters"),
+  check("description")
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage("Description must not exceed 500 characters"),
+  check("color")
+    .optional()
+    .isLength({ max: 30 })
+    .withMessage("Color must not exceed 30 characters"),
+  check("size")
+    .optional()
+    .isLength({ max: 10 })
+    .withMessage("Size must not exceed 10 characters"),
+  check("price")
+    .notEmpty()
+    .withMessage("Price is required")
+    .isDecimal({ decimal_digits: "2" })
+    .withMessage(
+      "Price must be a valid decimal number with up to 2 decimal places"
+    ),
+  check("categoryId")
+    .optional()
+    .isInt()
+    .withMessage("Category ID must be a valid integer"),
+  check("artistId")
+    .notEmpty()
+    .withMessage("Artist ID is required")
+    .isInt()
+    .withMessage("Artist ID must be a valid integer"),
+  handleValidationErrors,
+];
+
+const validateProductUpdate = [
+  check("name")
+    .optional()
+    .isLength({ max: 100 })
+    .withMessage("Product name must not exceed 100 characters"),
+  check("description")
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage("Description must not exceed 500 characters"),
+  check("color")
+    .optional()
+    .isLength({ max: 30 })
+    .withMessage("Color must not exceed 30 characters"),
+  check("size")
+    .optional()
+    .isLength({ max: 10 })
+    .withMessage("Size must not exceed 10 characters"),
+  check("price")
+    .optional()
+    .isDecimal({ decimal_digits: "2" })
+    .withMessage(
+      "Price must be a valid decimal number with up to 2 decimal places"
+    ),
+  check("categoryId")
+    .optional()
+    .isInt()
+    .withMessage("Category ID must be a valid integer"),
+  check("artistId")
+    .optional()
+    .isInt()
+    .withMessage("Artist ID must be a valid integer"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
@@ -176,4 +248,6 @@ module.exports = {
   validateShow,
   validateShowUpdate,
   validateCategory,
+  validateProduct,
+  validateProductUpdate,
 };
