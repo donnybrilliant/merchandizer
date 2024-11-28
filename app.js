@@ -8,6 +8,7 @@ const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
 const usersRouter = require("./routes/users");
 const artistsRouter = require("./routes/artists");
+const toursRouter = require("./routes/tours");
 
 // Sync database
 db.sequelize.sync({ force: false });
@@ -22,6 +23,7 @@ app.use("/", indexRouter);
 app.use("/", authRouter);
 app.use("/users", usersRouter);
 app.use("/artists", artistsRouter);
+app.use("/tours", toursRouter);
 
 // Error handling
 app.use(function (req, res, next) {
