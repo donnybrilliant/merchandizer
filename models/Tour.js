@@ -5,11 +5,11 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
     startDate: {
-      type: Sequelize.DataTypes.DATE,
+      type: Sequelize.DataTypes.DATEONLY,
       allowNull: false,
     },
     endDate: {
-      type: Sequelize.DataTypes.DATE,
+      type: Sequelize.DataTypes.DATEONLY,
       allowNull: false,
     },
   });
@@ -32,10 +32,6 @@ module.exports = (sequelize, Sequelize) => {
       foreignKey: "tourId",
     });
     Tour.belongsToMany(models.User, {
-      through: models.UserRoleTour,
-      foreignKey: "tourId",
-    });
-    Tour.belongsToMany(models.Role, {
       through: models.UserRoleTour,
       foreignKey: "tourId",
     });
