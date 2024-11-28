@@ -160,6 +160,12 @@ const validateShowUpdate = [
   handleValidationErrors,
 ];
 
+// Category validation
+const validateCategory = [
+  check("name").notEmpty().withMessage("Category name is required"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
@@ -169,4 +175,5 @@ module.exports = {
   validateTour,
   validateShow,
   validateShowUpdate,
+  validateCategory,
 };
