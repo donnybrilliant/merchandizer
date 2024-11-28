@@ -4,6 +4,7 @@ class ShowService {
   constructor(db) {
     this.client = db.sequelize;
     this.Show = db.Show;
+    this.Artist = db.Artist;
   }
 
   // Get all shows
@@ -16,15 +17,30 @@ class ShowService {
     return await this.Show.findByPk(id);
   }
 
-  // Search for shows by city or venue
+  // Search for shows by city, venue, date, country or artist
   async search(query) {
-    return await this.Show.findAll({
-      where: {
-        [Op.or]: [
-          { city: { [Op.like]: `%${query}%` } },
-          { venue: { [Op.like]: `%${query}%` } },
-        ],
+    const whereConditions = {};
+    const includeConditions = [
+      {
+        model: this.Artist,
+        attributes: ["id", "name"],
+        where: query.artist
+          ? { name: { [Op.like]: `%${query.artist}%` } }
+          : undefined,
       },
+    ];
+
+    // Dynamic query
+    const showFields = ["city", "venue", "date", "country"];
+    showFields.forEach((field) => {
+      if (query[field]) {
+        whereConditions[field] = { [Op.like]: `%${query[field]}%` };
+      }
+    });
+
+    return await this.Show.findAll({
+      where: whereConditions,
+      include: includeConditions,
     });
   }
 
