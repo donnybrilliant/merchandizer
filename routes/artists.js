@@ -20,7 +20,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Get artist(s) by name
+// Search for artists
 router.get("/search", validateArtist, async (req, res, next) => {
   try {
     const artists = await artistService.search(req.query.name);
@@ -28,7 +28,7 @@ router.get("/search", validateArtist, async (req, res, next) => {
     if (!artists.length) {
       return res.status(404).json({
         success: false,
-        error: "No artists found matching the query",
+        error: "No artists found matching the name",
       });
     }
 

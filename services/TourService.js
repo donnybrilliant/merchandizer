@@ -1,5 +1,6 @@
 class TourService {
   constructor(db) {
+    this.client = db.sequelize;
     this.Tour = db.Tour;
     this.Artist = db.Artist;
   }
