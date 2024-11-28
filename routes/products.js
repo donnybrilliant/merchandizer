@@ -3,6 +3,8 @@ const router = express.Router();
 const db = require("../models");
 const ProductService = require("../services/ProductService");
 const productService = new ProductService(db);
+const multer = require("multer");
+const sharp = require("sharp");
 const {
   validateProduct,
   validateProductUpdate,
@@ -105,6 +107,74 @@ router.delete("/:id", async (req, res, next) => {
     return res
       .status(200)
       .json({ success: true, message: "Product deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Multer setup for avatar uploads
+const upload = multer({
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
+// Update product image
+router.patch("/:id/image", upload.single("image"), async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      error: "No product image file provided",
+    });
+  }
+
+  try {
+    // Resize and convert the image to PNG
+    const resizedBuffer = await sharp(req.file.buffer)
+      .resize(300, 300)
+      .png()
+      .toBuffer();
+
+    // Update user's avatar and MIME type
+    const updateData = {
+      image: resizedBuffer,
+    };
+
+    const updatedProduct = await productService.update(
+      req.params.id,
+      updateData
+    );
+    if (!updatedProduct) {
+      return res
+        .status(404)
+        .json({ success: false, error: "No changes made to product" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Product image updated successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get product image
+router.get("/:id/image", async (req, res, next) => {
+  try {
+    const product = await productService.getById(req.params.id);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Product image not found" });
+    }
+
+    res.set("Content-Type", "image/png");
+    return res.send(product.image);
   } catch (err) {
     next(err);
   }
