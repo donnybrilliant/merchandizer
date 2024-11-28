@@ -45,6 +45,11 @@ const validateNewPassword = [
     .withMessage("New password is required")
     .isLength({ min: 8 })
     .withMessage("New password must be at least 8 characters long"),
+// Artist validation
+const validateArtist = [
+  check("name").notEmpty().withMessage("Name is required"),
+  handleValidationErrors,
+];
 ];
 
 module.exports = {
