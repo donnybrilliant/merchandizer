@@ -26,24 +26,10 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-// Get show by id
-router.get("/:id", async (req, res, next) => {
-  try {
-    const show = await showService.getById(req.params.id);
-    if (!show) {
-      return res.status(404).json({ success: false, error: "Show not found" });
-    }
-    return res.status(200).json({ success: true, data: show });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // Search for shows
 router.get("/search", async (req, res, next) => {
-  const { query } = req.query;
   try {
-    const shows = await showService.search(query);
+    const shows = await showService.search(req.query);
     if (!shows.length) {
       return res.status(404).json({
         success: true,
@@ -52,6 +38,19 @@ router.get("/search", async (req, res, next) => {
       });
     }
     return res.status(200).json({ success: true, data: shows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get show by id
+router.get("/:id", async (req, res, next) => {
+  try {
+    const show = await showService.getById(req.params.id);
+    if (!show) {
+      return res.status(404).json({ success: false, error: "Show not found" });
+    }
+    return res.status(200).json({ success: true, data: show });
   } catch (err) {
     next(err);
   }
