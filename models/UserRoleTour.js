@@ -1,12 +1,8 @@
 module.exports = (sequelize, Sequelize) => {
   const UserRoleTour = sequelize.define("UserRoleTour", {
-    roleId: {
-      type: Sequelize.DataTypes.INTEGER,
+    role: {
+      type: Sequelize.DataTypes.ENUM("manager", "sales", "viewer"),
       allowNull: false,
-      references: {
-        model: "Roles",
-        key: "id",
-      },
     },
     userId: {
       type: Sequelize.DataTypes.INTEGER,
@@ -28,7 +24,6 @@ module.exports = (sequelize, Sequelize) => {
 
   UserRoleTour.associate = function (models) {
     UserRoleTour.belongsTo(models.User, { foreignKey: "userId" });
-    UserRoleTour.belongsTo(models.Role, { foreignKey: "roleId" });
     UserRoleTour.belongsTo(models.Tour, { foreignKey: "tourId" });
   };
 

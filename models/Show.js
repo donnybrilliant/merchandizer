@@ -1,7 +1,7 @@
 module.exports = (sequelize, Sequelize) => {
   const Show = sequelize.define("Show", {
     date: {
-      type: Sequelize.DataTypes.DATE,
+      type: Sequelize.DataTypes.DATEONLY,
       allowNull: false,
     },
     venue: {
