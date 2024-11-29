@@ -145,7 +145,7 @@ router.patch("/me/avatar", upload.single("avatar"), async (req, res, next) => {
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        error: "User not found",
+        error: "No changes made to avatar",
       });
     }
 
