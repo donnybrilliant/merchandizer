@@ -1,4 +1,4 @@
-const { check, validationResult } = require("express-validator");
+const { check, body, validationResult } = require("express-validator");
 
 // Middleware to handle validation errors
 const handleValidationErrors = (req, res, next) => {
@@ -238,6 +238,85 @@ const validateProductUpdate = [
   handleValidationErrors,
 ];
 
+const validateSingleInventory = [
+  check("productId")
+    .notEmpty()
+    .withMessage("Product ID is required")
+    .isInt()
+    .withMessage("Product ID must be an integer"),
+  check("startInventory")
+    .notEmpty()
+    .withMessage("Start inventory is required")
+    .isInt({ min: 0 })
+    .withMessage("Start inventory must be a non-negative integer"),
+  check("endInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("End inventory must be a non-negative integer"),
+  handleValidationErrors,
+];
+
+const validateSingleInventoryUpdate = [
+  check("productId")
+    .notEmpty()
+    .withMessage("Product ID is required")
+    .isInt()
+    .withMessage("Product ID must be an integer"),
+  check("startInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Start inventory must be a non-negative integer"),
+  check("endInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("End inventory must be a non-negative integer"),
+  handleValidationErrors,
+];
+
+const validateMultipleInventory = [
+  body()
+    .isArray()
+    .withMessage("Request body must be an array of inventory items"),
+  body("*.productId")
+    .if((value, { req }) => Array.isArray(req.body))
+    .notEmpty()
+    .withMessage("Product ID is required")
+    .isInt()
+    .withMessage("Product ID must be an integer"),
+  body("*.startInventory")
+    .if((value, { req }) => Array.isArray(req.body))
+    .notEmpty()
+    .withMessage("Start inventory is required")
+    .isInt({ min: 0 })
+    .withMessage("Start inventory must be a non-negative integer"),
+  body("*.endInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("End inventory must be a non-negative integer"),
+  handleValidationErrors,
+];
+
+const validateMultipleInventoryUpdate = [
+  body()
+    .isArray()
+    .withMessage("Request body must be an array of inventory items"),
+  body("*.productId")
+    .if((value, { req }) => Array.isArray(req.body))
+    .notEmpty()
+    .withMessage("Product ID is required")
+    .isInt()
+    .withMessage("Product ID must be an integer"),
+  body("*.startInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Start inventory must be a non-negative integer"),
+  body("*.endInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("End inventory must be a non-negative integer"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
@@ -250,4 +329,8 @@ module.exports = {
   validateCategory,
   validateProduct,
   validateProductUpdate,
+  validateSingleInventory,
+  validateSingleInventoryUpdate,
+  validateMultipleInventory,
+  validateMultipleInventoryUpdate,
 };
