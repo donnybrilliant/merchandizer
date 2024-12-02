@@ -4,10 +4,10 @@ const db = require("../models");
 const InventoryService = require("../services/InventoryService");
 const inventoryService = new InventoryService(db);
 const {
-  validateShowInventory,
-  validateShowInventoryArray,
   validateSingleInventory,
   validateSingleInventoryUpdate,
+  validateMultipleInventory,
+  validateMultipleInventoryUpdate,
 } = require("../middleware/validation");
 
 // Get inventory for a specific show
@@ -45,6 +45,18 @@ router.get("/:productId", async (req, res, next) => {
   }
 });
 
+// Add multiple inventory items for a show
+router.post("/", validateMultipleInventory, async (req, res, next) => {
+  try {
+    const showId = req.params.id;
+
+    const inventories = await inventoryService.createMany(showId, req.body);
+
+    return res.status(201).json({ success: true, data: inventories });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Add inventory item for a show
 router.post("/:productId", validateSingleInventory, async (req, res, next) => {
@@ -64,6 +76,25 @@ router.post("/:productId", validateSingleInventory, async (req, res, next) => {
   }
 });
 
+// Update multiple inventory items for a show
+router.put("/", validateMultipleInventoryUpdate, async (req, res, next) => {
+  try {
+    const showId = req.params.id;
+
+    const inventories = await inventoryService.updateMany(showId, req.body);
+
+    if (!inventories) {
+      return res.status(404).json({
+        success: false,
+        message: "Inventory item not found or no changes made",
+      });
+    }
+
+    return res.status(200).json({ success: true, data: inventories });
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Update inventory item for a show
 router.put(
