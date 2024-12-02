@@ -238,6 +238,31 @@ const validateProductUpdate = [
   handleValidationErrors,
 ];
 
+const validateSingleInventory = [
+  check("startInventory")
+    .notEmpty()
+    .withMessage("Start inventory is required")
+    .isInt({ min: 0 })
+    .withMessage("Start inventory must be a non-negative integer"),
+  check("endInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("End inventory must be a non-negative integer"),
+  handleValidationErrors,
+];
+
+const validateSingleInventoryUpdate = [
+  check("startInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Start inventory must be a non-negative integer"),
+  check("endInventory")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("End inventory must be a non-negative integer"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
@@ -250,4 +275,6 @@ module.exports = {
   validateCategory,
   validateProduct,
   validateProductUpdate,
+  validateSingleInventory,
+  validateSingleInventoryUpdate,
 };
