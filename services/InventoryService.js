@@ -43,6 +43,30 @@ class InventoryService {
     return await this.ShowInventory.create(data);
   }
 
+  // Create multiple inventory items for a show
+  async createMany(showId, inventoryItems) {
+    const newInventories = [];
+
+    for (const item of inventoryItems) {
+      const { productId, startInventory, endInventory } = item;
+
+      if (endInventory && endInventory > startInventory) {
+        throw new Error("End inventory cannot be more than start inventory");
+      }
+
+      const existingInventory = await this.ShowInventory.findOne({
+        where: { showId, productId },
+      });
+
+      if (existingInventory) {
+        throw new Error(`Inventory for product ${productId} already exists`);
+      }
+
+      newInventories.push({ showId, productId, startInventory, endInventory });
+    }
+
+    return await this.ShowInventory.bulkCreate(newInventories);
+  }
 
   // Update inventory item
   async update(showId, productId, data) {
@@ -66,6 +90,32 @@ class InventoryService {
     return await this.ShowInventory.findOne({ where: { showId, productId } });
   }
 
+  // Update multiple inventory items for a show
+  async updateMany(showId, inventoryItems) {
+    const updatedInventories = [];
+
+    for (const item of inventoryItems) {
+      const { productId, ...data } = item;
+
+      if (data.endInventory && data.endInventory > data.startInventory) {
+        throw new Error("End inventory cannot be more than start inventory");
+      }
+
+      const rowsUpdated = await this.ShowInventory.update(data, {
+        where: { showId, productId },
+      });
+
+      if (!rowsUpdated[0]) return null;
+
+      const updatedInventory = await this.ShowInventory.findOne({
+        where: { showId, productId },
+      });
+
+      updatedInventories.push(updatedInventory);
+    }
+
+    return updatedInventories;
+  }
 
   // Delete inventory item
   async delete(showId, productId) {
