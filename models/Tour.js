@@ -27,10 +27,6 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
       },
     });
-    Tour.belongsToMany(models.Product, {
-      through: models.TourInventory,
-      foreignKey: "tourId",
-    });
     Tour.belongsToMany(models.User, {
       through: models.UserRoleTour,
       foreignKey: "tourId",
