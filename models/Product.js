@@ -35,11 +35,6 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
       },
     });
-    Product.belongsToMany(models.Tour, {
-      through: models.TourInventory,
-      foreignKey: "productId",
-      allowNull: true,
-    });
     Product.belongsToMany(models.Show, {
       through: models.ShowInventory,
       foreignKey: "productId",
