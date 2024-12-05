@@ -4,6 +4,7 @@ const db = require("../models");
 const ShowService = require("../services/ShowService");
 const showService = new ShowService(db);
 const inventoryRouter = require("./inventory");
+const adjustmentRouter = require("./adjustments");
 const {
   validateShow,
   validateShowUpdate,
@@ -109,5 +110,6 @@ router.delete("/:id", async (req, res, next) => {
 });
 
 router.use("/:id/inventory", inventoryRouter);
+router.use("/:id/adjustments", adjustmentRouter);
 
 module.exports = router;
