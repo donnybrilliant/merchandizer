@@ -9,21 +9,29 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
     type: {
-      type: Sequelize.DataTypes.ENUM("giveaway", "discount", "loss", "other"),
+      type: Sequelize.DataTypes.ENUM(
+        "giveaway",
+        "discount",
+        "loss",
+        "restock",
+        "other"
+      ),
       allowNull: false,
+    },
+    discountValue: {
+      type: Sequelize.DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+    },
+    discountType: {
+      type: Sequelize.DataTypes.ENUM("fixed", "percentage"),
+      allowNull: true,
     },
   });
 
   Adjustment.associate = function (models) {
-    Adjustment.belongsTo(models.Show, {
+    Adjustment.belongsTo(models.ShowInventory, {
       foreignKey: {
-        name: "showId",
-        allowNull: false,
-      },
-    });
-    Adjustment.belongsTo(models.Product, {
-      foreignKey: {
-        name: "productId",
+        name: "showInventoryId",
         allowNull: false,
       },
     });
