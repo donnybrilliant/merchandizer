@@ -204,6 +204,7 @@ const validateProduct = [
   handleValidationErrors,
 ];
 
+// Update product validation
 const validateProductUpdate = [
   check("name")
     .optional()
@@ -238,6 +239,7 @@ const validateProductUpdate = [
   handleValidationErrors,
 ];
 
+// Single inventory validation
 const validateSingleInventory = [
   check("productId")
     .notEmpty()
@@ -256,6 +258,7 @@ const validateSingleInventory = [
   handleValidationErrors,
 ];
 
+// Update single inventory validation
 const validateSingleInventoryUpdate = [
   check("productId")
     .notEmpty()
@@ -273,6 +276,7 @@ const validateSingleInventoryUpdate = [
   handleValidationErrors,
 ];
 
+// Multiple inventory validation
 const validateMultipleInventory = [
   body()
     .isArray()
@@ -296,6 +300,7 @@ const validateMultipleInventory = [
   handleValidationErrors,
 ];
 
+// Update multiple inventory validation
 const validateMultipleInventoryUpdate = [
   body()
     .isArray()
@@ -317,6 +322,85 @@ const validateMultipleInventoryUpdate = [
   handleValidationErrors,
 ];
 
+// Adjustment validation
+const validateAdjustment = [
+  body("productId")
+    .notEmpty()
+    .withMessage("Product ID is required")
+    .isInt()
+    .withMessage("Product ID must be an integer"),
+  body("quantity")
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be a positive integer."),
+  body("reason").notEmpty().withMessage("Reason is required."),
+  body("type")
+    .isIn(["giveaway", "discount", "loss", "restock", "other"])
+    .withMessage(
+      "Type must be one of: giveaway, discount, loss, restock, other."
+    ),
+  body("discountValue")
+    .if((value, { req }) => req.body.type === "discount")
+    .notEmpty()
+    .withMessage("Discount value is required for type 'discount'")
+    .isDecimal({ decimal_digits: "2" })
+    .withMessage("Discount value must be a positive decimal number."),
+  body("discountType")
+    .if((value, { req }) => req.body.type === "discount")
+    .notEmpty()
+    .withMessage("Discount type is required for type 'discount'")
+    .isIn(["fixed", "percentage"])
+    .withMessage("Discount type must be 'fixed' or 'percentage'."),
+  body("discountValue")
+    .if((value, { req }) => req.body.type !== "discount")
+    .isEmpty()
+    .withMessage("Discount value is not allowed unless type is 'discount'"),
+  body("discountType")
+    .if((value, { req }) => req.body.type !== "discount")
+    .isEmpty()
+    .withMessage("Discount type is not allowed unless type is 'discount'"),
+  handleValidationErrors,
+];
+
+// Update adjustment validation
+const validateAdjustmentUpdate = [
+  body("quantity")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be a positive integer."),
+  body("reason").optional().notEmpty().withMessage("Reason must not be empty."),
+  body("type")
+    .optional()
+    .isIn(["giveaway", "discount", "loss", "restock", "other"])
+    .withMessage(
+      "Type must be one of: giveaway, discount, loss, restock, other."
+    ),
+  body("discountValue")
+    .optional()
+    .if((value, { req }) => req.body.type === "discount")
+    .notEmpty()
+    .withMessage("Discount value is required for type 'discount'")
+    .isDecimal({ decimal_digits: "2" })
+    .withMessage("Discount value must be a positive decimal number."),
+  body("discountType")
+    .optional()
+    .if((value, { req }) => req.body.type === "discount")
+    .notEmpty()
+    .withMessage("Discount type is required for type 'discount'")
+    .isIn(["fixed", "percentage"])
+    .withMessage("Discount type must be 'fixed' or 'percentage'."),
+  body("discountValue")
+    .optional()
+    .if((value, { req }) => req.body.type !== "discount")
+    .isEmpty()
+    .withMessage("Discount value is not allowed unless type is 'discount'"),
+  body("discountType")
+    .optional()
+    .if((value, { req }) => req.body.type !== "discount")
+    .isEmpty()
+    .withMessage("Discount type is not allowed unless type is 'discount'"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
@@ -333,4 +417,6 @@ module.exports = {
   validateSingleInventoryUpdate,
   validateMultipleInventory,
   validateMultipleInventoryUpdate,
+  validateAdjustment,
+  validateAdjustmentUpdate,
 };
