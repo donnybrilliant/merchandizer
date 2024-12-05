@@ -1,5 +1,11 @@
 module.exports = (sequelize, Sequelize) => {
   const ShowInventory = sequelize.define("ShowInventory", {
+    id: {
+      type: Sequelize.DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     startInventory: {
       type: Sequelize.DataTypes.INTEGER,
       allowNull: false,
@@ -23,12 +29,12 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
       },
     });
-    /*     ShowInventory.hasMany(models.Adjustment, {
+    ShowInventory.hasMany(models.Adjustment, {
       foreignKey: {
         name: "showInventoryId",
         allowNull: false,
       },
-    }); */
+    });
   };
 
   return ShowInventory;
