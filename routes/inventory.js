@@ -3,6 +3,8 @@ const router = express.Router({ mergeParams: true });
 const db = require("../models");
 const InventoryService = require("../services/InventoryService");
 const inventoryService = new InventoryService(db);
+const ShowService = require("../services/ShowService");
+const showService = new ShowService(db);
 const {
   validateSingleInventory,
   validateSingleInventoryUpdate,
@@ -53,6 +55,25 @@ router.post("/", validateMultipleInventory, async (req, res, next) => {
     const inventories = await inventoryService.createMany(showId, req.body);
 
     return res.status(201).json({ success: true, data: inventories });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/copy", async (req, res, next) => {
+  try {
+    const currentShowId = req.params.id;
+
+    // Find the previous show
+    const previousShow = await showService.findPreviousShow(currentShowId);
+
+    // Pass the previous show to copy the inventory
+    const result = await inventoryService.copyInventoryFromPreviousShow(
+      currentShowId,
+      previousShow
+    );
+
+    return res.status(200).json({ success: true, data: result });
   } catch (err) {
     next(err);
   }
