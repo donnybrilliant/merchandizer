@@ -1,10 +1,11 @@
-const { Op } = require("sequelize");
-
+const calculateAdjustments = require("../utils/calculation");
 class InventoryService {
   constructor(db) {
     this.client = db.sequelize;
     this.ShowInventory = db.ShowInventory;
     this.Product = db.Product;
+    this.Adjustment = db.Adjustment;
+    this.Shows = db.Shows;
   }
 
   // Get all inventory items for a specific show
@@ -120,6 +121,76 @@ class InventoryService {
   // Delete inventory item
   async delete(showId, productId) {
     return await this.ShowInventory.destroy({ where: { showId, productId } });
+  }
+
+  async copyInventoryFromPreviousShow(currentShowId, previousShow) {
+    const previousInventories = await this.ShowInventory.findAll({
+      where: { showId: previousShow.id },
+    });
+
+    if (!previousInventories.length) {
+      throw new Error("No inventories found for the previous show."); // show not found?
+    }
+
+    // Calculate adjusted endInventory for each product
+    const adjustedEndInventories = await Promise.all(
+      previousInventories.map(async (inventory) => {
+        if (inventory.endInventory === null) {
+          throw new Error(
+            `End inventory for productId ${inventory.productId} is null. Cannot copy inventory.`
+          );
+        }
+        // Find adjustments
+        const adjustments = await this.Adjustment.findAll({
+          where: { showInventoryId: inventory.id },
+        });
+
+        // Calculate adjustments
+        const totalAdjustment = calculateAdjustments(adjustments);
+
+        const adjustedEndInventory = inventory.endInventory + totalAdjustment;
+
+        /*         if (isNaN(adjustedEndInventory) || adjustedEndInventory < 0) {
+          throw new Error(
+            `Invalid adjusted end inventory for productId ${inventory.productId}: ${adjustedEndInventory}`
+          );
+        } */
+
+        return {
+          productId: inventory.productId,
+          adjustedEndInventory,
+        };
+      })
+    );
+
+    // Create startInventory for current show.
+    await Promise.all(
+      adjustedEndInventories.map(async (inventory) => {
+        const productId = inventory.productId;
+        const adjustedEndInventory = inventory.adjustedEndInventory;
+
+        const existingInventory = await this.ShowInventory.findOne({
+          where: { showId: currentShowId, productId },
+        });
+
+        if (!existingInventory) {
+          await this.ShowInventory.create({
+            showId: currentShowId,
+            productId: productId,
+            startInventory: adjustedEndInventory,
+          });
+        }
+      })
+    );
+
+    // Return the updated inventory for the current show
+    const updatedInventory = await this.getAllByShow(currentShowId);
+
+    return {
+      success: true,
+      message: "Start inventory created from previous show for missing items.",
+      data: updatedInventory,
+    };
   }
 }
 
