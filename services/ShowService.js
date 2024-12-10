@@ -60,6 +60,36 @@ class ShowService {
   async delete(id) {
     return await this.Show.destroy({ where: { id } });
   }
+
+  // Find the previous show for the current show in the same tour
+  async findPreviousShow(currentShowId) {
+    const currentShow = await this.Show.findByPk(currentShowId);
+
+    if (!currentShow) {
+      throw new Error("Current show not found");
+    }
+
+    if (!currentShow.tourId) {
+      throw new Error("Current show does not belong to a tour");
+    }
+
+    // Get all shows in the same tour, ordered by date
+    const shows = await this.Show.findAll({
+      where: { tourId: currentShow.tourId },
+      order: [["date", "ASC"]],
+    });
+
+    // Find the index of the current show
+    const showIndex = shows.findIndex(
+      (show) => show.id === Number(currentShowId)
+    );
+
+    if (showIndex <= 0) {
+      throw new Error("No previous show found for the tour");
+    }
+
+    return shows[showIndex - 1];
+  }
 }
 
 module.exports = ShowService;
