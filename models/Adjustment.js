@@ -9,13 +9,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
     },
     type: {
-      type: Sequelize.DataTypes.ENUM(
-        "giveaway",
-        "discount",
-        "loss",
-        "restock",
-        "other"
-      ),
+      type: Sequelize.DataTypes.ENUM("giveaway", "discount", "loss", "restock"),
       allowNull: false,
     },
     discountValue: {
