@@ -12,6 +12,20 @@ class ShowService {
     return await this.Show.findAll();
   }
 
+  // Get all shows on the tour
+  async getAllByTour(tourId) {
+    return await this.Show.findAll({
+      where: { tourId },
+      include: [
+        {
+          model: this.Artist,
+          attributes: ["id", "name"],
+        },
+      ],
+      attributes: ["id", "date", "venue", "city", "country"],
+    });
+  }
+
   // Get show by id
   async getById(id) {
     return await this.Show.findByPk(id);
