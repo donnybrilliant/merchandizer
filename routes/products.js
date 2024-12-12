@@ -5,10 +5,13 @@ const ProductService = require("../services/ProductService");
 const productService = new ProductService(db);
 const multer = require("multer");
 const sharp = require("sharp");
+const { isAuth } = require("../middleware/auth");
 const {
   validateProduct,
   validateProductUpdate,
 } = require("../middleware/validation");
+
+router.use(isAuth);
 
 // Get all products
 router.get("/", async (req, res, next) => {
