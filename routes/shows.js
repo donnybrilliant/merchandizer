@@ -1,17 +1,37 @@
 const express = require("express");
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 const db = require("../models");
 const ShowService = require("../services/ShowService");
 const showService = new ShowService(db);
 const inventoryRouter = require("./inventory");
 const adjustmentRouter = require("./adjustments");
+const { adminOnly, authorize } = require("../middleware/auth");
 const {
   validateShow,
   validateShowUpdate,
 } = require("../middleware/validation");
 
 // Get all shows
-router.get("/", async (req, res, next) => {
+router.get("/", authorize("viewShows"), async (req, res, next) => {
+  try {
+    const { tourId } = req.params;
+    const shows = await showService.getAllByTour(tourId);
+    if (!shows.length) {
+      return res
+        .status(200)
+        .json({ success: true, message: "No shows exist", data: shows });
+    }
+    return res.status(200).json({
+      success: true,
+      data: shows,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get all shows for admin
+router.get("/all", adminOnly, async (req, res, next) => {
   try {
     const shows = await showService.getAll();
     if (!shows.length) {
@@ -29,14 +49,14 @@ router.get("/", async (req, res, next) => {
 });
 
 // Search for shows
-router.get("/search", async (req, res, next) => {
+router.get("/search", authorize("viewShows"), async (req, res, next) => {
   try {
     const shows = await showService.search(req.query);
     if (!shows.length) {
       return res.status(404).json({
         success: true,
-        data: shows,
         message: "No shows found matching the query",
+        data: shows,
       });
     }
     return res.status(200).json({ success: true, data: shows });
@@ -46,9 +66,9 @@ router.get("/search", async (req, res, next) => {
 });
 
 // Get show by id
-router.get("/:id", async (req, res, next) => {
+router.get("/:showId", authorize("viewShows"), async (req, res, next) => {
   try {
-    const show = await showService.getById(req.params.id);
+    const show = await showService.getById(req.params.showId);
     if (!show) {
       return res.status(404).json({ success: false, error: "Show not found" });
     }
@@ -59,44 +79,56 @@ router.get("/:id", async (req, res, next) => {
 });
 
 // Create new show
-router.post("/", validateShow, async (req, res, next) => {
-  try {
-    const newShow = await showService.create(req.body);
-    return res.status(201).json({
-      success: true,
-      data: newShow,
-    });
-  } catch (err) {
-    next(err);
+router.post(
+  "/",
+  authorize("manageShows"),
+  validateShow,
+  async (req, res, next) => {
+    try {
+      const show = await showService.create(req.body);
+      return res.status(201).json({
+        success: true,
+        data: show,
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Update show by id
-router.put("/:id", validateShowUpdate, async (req, res, next) => {
-  try {
-    const show = await showService.getById(req.params.id);
-    if (!show) {
-      return res.status(404).json({ success: false, error: "Show not found" });
+router.put(
+  "/:showId",
+  authorize("manageShows"),
+  validateShowUpdate,
+  async (req, res, next) => {
+    try {
+      const show = await showService.getById(req.params.showId);
+      if (!show) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Show not found" });
+      }
+      const updatedShow = await showService.update(req.params.showId, req.body);
+      if (!updatedShow) {
+        return res
+          .status(404)
+          .json({ success: false, error: "No changes made to show" });
+      }
+      return res.status(200).json({
+        success: true,
+        data: updatedShow,
+      });
+    } catch (err) {
+      next(err);
     }
-    const updatedShow = await showService.update(req.params.id, req.body);
-    if (!updatedShow) {
-      return res
-        .status(404)
-        .json({ success: false, error: "No changes made to show" });
-    }
-    return res.status(200).json({
-      success: true,
-      data: updatedShow,
-    });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 // Delete show by id
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:showId", authorize("manageShows"), async (req, res, next) => {
   try {
-    const deleted = await showService.delete(req.params.id);
+    const deleted = await showService.delete(req.params.showId);
     if (!deleted) {
       return res.status(404).json({ success: false, error: "Show not found" });
     }
@@ -109,7 +141,7 @@ router.delete("/:id", async (req, res, next) => {
   }
 });
 
-router.use("/:id/inventory", inventoryRouter);
-router.use("/:id/adjustments", adjustmentRouter);
+router.use("/:showId/inventory", inventoryRouter);
+router.use("/:showId/adjustments", adjustmentRouter);
 
 module.exports = router;

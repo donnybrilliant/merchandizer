@@ -11,11 +11,12 @@ const {
   validateMultipleInventory,
   validateMultipleInventoryUpdate,
 } = require("../middleware/validation");
+const { authorize } = require("../middleware/auth");
 
 // Get inventory for a specific show
-router.get("/", async (req, res, next) => {
+router.get("/", authorize("viewInventory"), async (req, res, next) => {
   try {
-    const showId = req.params.id;
+    const showId = req.params.showId;
     const inventories = await inventoryService.getAllByShow(showId);
     if (!inventories.length) {
       return res
@@ -29,40 +30,49 @@ router.get("/", async (req, res, next) => {
 });
 
 // Get inventory for a specific show and product
-router.get("/:productId", async (req, res, next) => {
-  try {
-    const showId = req.params.id;
-    const productId = req.params.productId;
-    const inventories = await inventoryService.getById(showId, productId);
+router.get(
+  "/:productId",
+  authorize("viewInventory"),
+  async (req, res, next) => {
+    try {
+      const showId = req.params.showId;
+      const productId = req.params.productId;
+      const inventories = await inventoryService.getById(showId, productId);
 
-    if (!inventories) {
-      return res.status(404).json({
-        success: false,
-        message: "No inventory found for the show and product",
-      });
+      if (!inventories) {
+        return res.status(404).json({
+          success: false,
+          message: "No inventory found for the show and product",
+        });
+      }
+      return res.status(200).json({ success: true, data: inventories });
+    } catch (err) {
+      next(err);
     }
-    return res.status(200).json({ success: true, data: inventories });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 // Add multiple inventory items for a show
-router.post("/", validateMultipleInventory, async (req, res, next) => {
-  try {
-    const showId = req.params.id;
+router.post(
+  "/",
+  authorize("manageInventory"),
+  validateMultipleInventory,
+  async (req, res, next) => {
+    try {
+      const showId = req.params.showId;
 
-    const inventories = await inventoryService.createMany(showId, req.body);
+      const inventories = await inventoryService.createMany(showId, req.body);
 
-    return res.status(201).json({ success: true, data: inventories });
-  } catch (err) {
-    next(err);
+      return res.status(201).json({ success: true, data: inventories });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-router.post("/copy", async (req, res, next) => {
+router.post("/copy", authorize("manageInventory"), async (req, res, next) => {
   try {
-    const currentShowId = req.params.id;
+    const currentShowId = req.params.showId;
 
     // Find the previous show
     const previousShow = await showService.findPreviousShow(currentShowId);
@@ -80,50 +90,61 @@ router.post("/copy", async (req, res, next) => {
 });
 
 // Add inventory item for a show
-router.post("/:productId", validateSingleInventory, async (req, res, next) => {
-  try {
-    const showId = req.params.id;
-    const productId = req.params.productId;
+router.post(
+  "/:productId",
+  authorize("manageInventory"),
+  validateSingleInventory,
+  async (req, res, next) => {
+    try {
+      const showId = req.params.showId;
+      const productId = req.params.productId;
 
-    const newInventory = await inventoryService.create({
-      ...req.body,
-      showId,
-      productId,
-    });
+      const newInventory = await inventoryService.create({
+        ...req.body,
+        showId,
+        productId,
+      });
 
-    return res.status(201).json({ success: true, data: newInventory });
-  } catch (err) {
-    next(err);
+      return res.status(201).json({ success: true, data: newInventory });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Update multiple inventory items for a show
-router.put("/", validateMultipleInventoryUpdate, async (req, res, next) => {
-  try {
-    const showId = req.params.id;
+router.put(
+  "/",
+  authorize("manageInventory"),
+  validateMultipleInventoryUpdate,
+  async (req, res, next) => {
+    try {
+      const showId = req.params.showId;
 
-    const inventories = await inventoryService.updateMany(showId, req.body);
+      const inventories = await inventoryService.updateMany(showId, req.body);
 
-    if (!inventories) {
-      return res.status(404).json({
-        success: false,
-        message: "Inventory item not found or no changes made",
-      });
+      if (!inventories) {
+        return res.status(404).json({
+          success: false,
+          message: "Inventory item not found or no changes made",
+        });
+      }
+
+      return res.status(200).json({ success: true, data: inventories });
+    } catch (err) {
+      next(err);
     }
-
-    return res.status(200).json({ success: true, data: inventories });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 // Update inventory item for a show
 router.put(
   "/:productId",
+  authorize("manageInventory"),
   validateSingleInventoryUpdate,
   async (req, res, next) => {
     try {
-      const showId = req.params.id;
+      const showId = req.params.showId;
       const productId = req.params.productId;
 
       const updatedInventory = await inventoryService.update(
@@ -147,25 +168,30 @@ router.put(
 );
 
 // Delete inventory item for a show
-router.delete("/:productId", async (req, res, next) => {
-  try {
-    const showId = req.params.id;
-    const productId = req.params.productId;
+router.delete(
+  "/:productId",
+  authorize("deleteInventory"),
+  async (req, res, next) => {
+    try {
+      const showId = req.params.showId;
+      const productId = req.params.productId;
 
-    const deleted = await inventoryService.delete(showId, productId);
+      const deleted = await inventoryService.delete(showId, productId);
 
-    if (!deleted) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Inventory item not found" });
+      if (!deleted) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Inventory item not found" });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Inventory item deleted successfully",
+      });
+    } catch (err) {
+      next(err);
     }
-
-    return res
-      .status(200)
-      .json({ success: true, message: "Inventory item deleted successfully" });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 module.exports = router;

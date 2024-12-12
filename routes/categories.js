@@ -3,7 +3,10 @@ const router = express.Router();
 const db = require("../models");
 const CategoryService = require("../services/CategoryService");
 const categoryService = new CategoryService(db);
+const { isAuth } = require("../middleware/auth");
 const { validateCategory } = require("../middleware/validation");
+
+router.use(isAuth);
 
 // Get all categories
 router.get("/", async (req, res, next) => {

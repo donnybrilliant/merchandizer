@@ -3,10 +3,30 @@ const router = express.Router();
 const db = require("../models");
 const TourService = require("../services/TourService");
 const tourService = new TourService(db);
+const showsRouter = require("./shows");
+const rolesRouter = require("./roles");
+const { isAuth, authorize, adminOnly } = require("../middleware/auth");
 const { validateTour } = require("../middleware/validation");
 
+router.use(isAuth);
+
 // Get all tours
-router.get("/", async (req, res, next) => {
+router.get("/", authorize("viewTour"), async (req, res, next) => {
+  try {
+    const tours = await tourService.getAllForUser(req.user.id);
+    if (!tours.length) {
+      return res
+        .status(200)
+        .json({ success: true, message: "No tours exist", data: tours });
+    }
+    return res.status(200).json({ success: true, data: tours });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get all tours for admin
+router.get("/all", adminOnly, async (req, res, next) => {
   try {
     const tours = await tourService.getAll();
     if (!tours.length) {
@@ -21,9 +41,9 @@ router.get("/", async (req, res, next) => {
 });
 
 // Get tour by id
-router.get("/:id", async (req, res, next) => {
+router.get("/:tourId", authorize("viewTour"), async (req, res, next) => {
   try {
-    const tour = await tourService.getById(req.params.id);
+    const tour = await tourService.getById(req.params.tourId);
     if (!tour) {
       return res.status(404).json({ success: false, error: "Tour not found" });
     }
@@ -36,7 +56,7 @@ router.get("/:id", async (req, res, next) => {
 // Create new tour
 router.post("/", validateTour, async (req, res, next) => {
   try {
-    const tour = await tourService.create(req.body);
+    const tour = await tourService.create(req.body, req.user.id);
     return res.status(201).json({ success: true, data: tour });
   } catch (err) {
     next(err);
@@ -44,28 +64,35 @@ router.post("/", validateTour, async (req, res, next) => {
 });
 
 // Update tour by id
-router.put("/:id", validateTour, async (req, res, next) => {
-  try {
-    const tour = await tourService.getById(req.params.id);
-    if (!tour) {
-      return res.status(404).json({ success: false, error: "Tour not found" });
+router.put(
+  "/:tourId",
+  authorize("manageTour"),
+  validateTour,
+  async (req, res, next) => {
+    try {
+      const tour = await tourService.getById(req.params.tourId);
+      if (!tour) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Tour not found" });
+      }
+      const updatedTour = await tourService.update(req.params.tourId, req.body);
+      if (!updatedTour) {
+        return res
+          .status(404)
+          .json({ success: false, error: "No changes made to tour" });
+      }
+      return res.status(200).json({ success: true, data: updatedTour });
+    } catch (err) {
+      next(err);
     }
-    const updatedTour = await tourService.update(req.params.id, req.body);
-    if (!updatedTour) {
-      return res
-        .status(404)
-        .json({ success: false, error: "No changes made to tour" });
-    }
-    return res.status(200).json({ success: true, data: updatedTour });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 // Delete tour by id
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:tourId", authorize("manageTour"), async (req, res, next) => {
   try {
-    const deleted = await tourService.delete(req.params.id);
+    const deleted = await tourService.delete(req.params.tourId);
     if (!deleted) {
       return res.status(404).json({ success: false, error: "Tour not found" });
     }
@@ -76,5 +103,8 @@ router.delete("/:id", async (req, res, next) => {
     next(err);
   }
 });
+
+router.use("/:tourId/shows", showsRouter);
+router.use("/:tourId/roles", rolesRouter);
 
 module.exports = router;
