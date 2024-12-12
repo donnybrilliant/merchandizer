@@ -31,6 +31,10 @@ module.exports = (sequelize, Sequelize) => {
       through: models.UserRoleTour,
       foreignKey: "tourId",
     });
+    Tour.belongsTo(models.User, {
+      as: "creator",
+      foreignKey: "createdBy",
+    });
   };
 
   return Tour;
