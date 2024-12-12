@@ -12,6 +12,28 @@ class TourService {
     });
   }
 
+  // Get tours for user
+  async getAllForUser(userId) {
+    return await this.Tour.findAll({
+      include: [
+        { model: this.Artist, attributes: ["id", "name"] },
+        {
+          model: this.User,
+          attributes: [],
+          through: {
+            attributes: ["role"],
+          },
+          where: { id: userId },
+          required: true,
+        },
+        {
+          model: this.Show,
+          attributes: ["id", "date", "venue", "city", "country"],
+        },
+      ],
+    });
+  }
+
   // Get tour by id
   async getById(id) {
     return await this.Tour.findByPk(id, {
