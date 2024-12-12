@@ -5,13 +5,13 @@ const UserService = require("../services/UserService");
 const userService = new UserService(db);
 const multer = require("multer");
 const sharp = require("sharp");
-const { isAuth } = require("../middleware/auth");
+const { isAuth, adminOnly } = require("../middleware/auth");
 const { validatePhoneNumber } = require("../middleware/validation");
 
 router.use(isAuth);
 
 // Get all users
-router.get("/", async (req, res, next) => {
+router.get("/", adminOnly, async (req, res, next) => {
   try {
     const users = await userService.getAll();
 
