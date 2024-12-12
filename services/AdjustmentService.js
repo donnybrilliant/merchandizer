@@ -70,20 +70,23 @@ class AdjustmentService {
   }
 
   // Create new adjustment
-  async create(data) {
-    const showInventory = await this.getShowInventory(
-      data.showId,
-      data.productId
-    );
+  async create(showId, productId, userId, data) {
+    const { quantity, reason, type, discountValue, discountType } = data;
+    // Check if show inventory exists
+    const showInventory = await this.getShowInventory(showId, productId);
+    if (!showInventory)
+      throw new Error("No inventory found for the specified show and product.");
+
+    if (quantity <= 0) throw new Error("Quantity must be a positive number.");
 
     return await this.Adjustment.create({
       showInventoryId: showInventory.id,
-      quantity: data.quantity,
-      reason: data.reason,
-      type: data.type,
-      discountValue: data.discountValue,
-      discountType: data.discountType,
-      userId: data.userId,
+      quantity,
+      reason,
+      type,
+      discountValue,
+      discountType,
+      userId,
     });
   }
 

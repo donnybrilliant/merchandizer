@@ -1,11 +1,10 @@
 const calculateAdjustments = require("../utils/calculation");
 class InventoryService {
   constructor(db) {
-    this.client = db.sequelize;
     this.ShowInventory = db.ShowInventory;
     this.Product = db.Product;
     this.Adjustment = db.Adjustment;
-    this.Shows = db.Shows;
+    this.Show = db.Show;
   }
 
   // Get all inventory items for a specific show
@@ -26,6 +25,14 @@ class InventoryService {
 
   // Create inventory item for a show
   async create(data) {
+    // Check if product exists
+    const product = await this.Product.findByPk(data.productId);
+    if (!product) throw new Error("Product not found.");
+
+    // Check if show exists
+    const show = await this.Show.findByPk(data.showId);
+    if (!show) throw new Error("Show not found.");
+
     if (data.endInventory && data.endInventory > data.startInventory) {
       throw new Error("End inventory cannot be more than start inventory");
     }
