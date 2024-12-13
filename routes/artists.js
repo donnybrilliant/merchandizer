@@ -3,7 +3,10 @@ const router = express.Router();
 const db = require("../models");
 const ArtistService = require("../services/ArtistService");
 const artistService = new ArtistService(db);
+const { isAuth } = require("../middleware/auth");
 const { validateArtist } = require("../middleware/validation");
+
+router.use(isAuth);
 
 // Get all artists
 router.get("/", async (req, res, next) => {
@@ -23,10 +26,11 @@ router.get("/", async (req, res, next) => {
 // Search for artists
 router.get("/search", validateArtist, async (req, res, next) => {
   try {
-    const artists = await artistService.search(req.query.name);
+    const { name } = req.query;
+    const result = await artistService.search(name);
 
-    if (!artists.length) {
-      return res.status(404).json({
+    if (!result.length) {
+      return res.status(200).json({
         success: false,
         error: "No artists found matching the name",
       });
@@ -34,7 +38,7 @@ router.get("/search", validateArtist, async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      data: artists,
+      data: result,
     });
   } catch (err) {
     next(err);
@@ -42,14 +46,10 @@ router.get("/search", validateArtist, async (req, res, next) => {
 });
 
 // Get artist by id
-router.get("/:id", async (req, res, next) => {
+router.get("/:artistId", async (req, res, next) => {
   try {
-    const artist = await artistService.getById(req.params.id);
-    if (!artist) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Artist not found" });
-    }
+    const { artistId } = req.params;
+    const artist = await artistService.getById(artistId);
     return res.status(200).json({ success: true, data: artist });
   } catch (err) {
     next(err);
@@ -59,25 +59,49 @@ router.get("/:id", async (req, res, next) => {
 // Create new artist
 router.post("/", validateArtist, async (req, res, next) => {
   try {
-    const artist = await artistService.create(req.body);
-    return res.status(201).json({ success: true, data: artist });
+    const newArtist = await artistService.create(req.body);
+    return res.status(201).json({
+      success: true,
+      message: "Artist created successfully",
+      data: newArtist,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Update artist
+router.put("/:artistId", validateArtist, async (req, res, next) => {
+  try {
+    const { artistId } = req.params;
+    const updatedArtist = await artistService.update(artistId, req.body);
+    if (updatedArtist.noChanges) {
+      return res.status(200).json({
+        success: true,
+        message: "No changes made to artist",
+        data: updatedArtist.data,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Artist updated successfully",
+      data: updatedArtist,
+    });
   } catch (err) {
     next(err);
   }
 });
 
 // Delete artist by id
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:artistId", async (req, res, next) => {
   try {
-    const deleted = await artistService.delete(req.params.id);
-    if (!deleted) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Artist not found" });
-    }
-    return res
-      .status(200)
-      .json({ success: true, message: "Artist deleted successfully" });
+    const { artistId } = req.params;
+    const artist = await artistService.delete(artistId);
+    return res.status(200).json({
+      success: true,
+      message: "Artist deleted successfully",
+      data: artist,
+    });
   } catch (err) {
     next(err);
   }
