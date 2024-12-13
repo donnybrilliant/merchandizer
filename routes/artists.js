@@ -3,7 +3,10 @@ const router = express.Router();
 const db = require("../models");
 const ArtistService = require("../services/ArtistService");
 const artistService = new ArtistService(db);
+const { isAuth } = require("../middleware/auth");
 const { validateArtist } = require("../middleware/validation");
+
+router.use(isAuth);
 
 // Get all artists
 router.get("/", async (req, res, next) => {
