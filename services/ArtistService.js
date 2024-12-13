@@ -1,8 +1,8 @@
 const { Op } = require("sequelize");
+const { isSameData } = require("../utils/checks");
 
 class ArtistService {
   constructor(db) {
-    this.client = db.sequelize;
     this.Artist = db.Artist;
   }
 
@@ -13,7 +13,16 @@ class ArtistService {
 
   // Get artist by id
   async getById(id) {
-    return await this.Artist.findByPk(id);
+    const artist = await this.Artist.findByPk(id);
+    if (!artist) throw new Error("Artist not found");
+    return artist;
+  }
+
+  // Get artist by name
+  async getByName(name) {
+    return await this.Artist.findOne({
+      where: { name },
+    });
   }
 
   // Search artist by name
@@ -28,13 +37,37 @@ class ArtistService {
   }
 
   // Create new artist
-  async create(artistData) {
-    return await this.Artist.create(artistData);
+  async create(data) {
+    const existingArtist = await this.getByName(data.name);
+    if (existingArtist) {
+      throw new Error(`Artist with the name ${data.name} already exists.`); // 409
+    }
+    return await this.Artist.create(data);
+  }
+
+  // Update artist
+  async update(id, data) {
+    // Check if the artist exists
+    const artist = await this.getById(id);
+
+    // Check if the data is the same as the artist
+    if (isSameData(artist, data)) {
+      return { noChanges: true, data: artist };
+    }
+
+    const existingArtist = await this.getByName(data.name);
+    if (existingArtist) {
+      throw new Error(`Artist with the name ${data.name} already exists.`); // 409
+    }
+
+    return await artist.update(data);
   }
 
   // Delete artist
   async delete(id) {
-    return await this.Artist.destroy({ where: { id } });
+    const artist = await this.getById(id);
+    await artist.destroy();
+    return artist;
   }
 }
 
