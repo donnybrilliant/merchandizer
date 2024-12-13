@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const logger = require("morgan");
-const createError = require("http-errors");
 const db = require("./models");
+const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 
 const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
@@ -32,15 +32,7 @@ app.use("/products", productsRouter);
 app.use("/stats", statsRouter);
 
 // Error handling
-app.use(function (req, res, next) {
-  next(createError(404, "Endpoint not found"));
-});
-
-app.use(function (err, req, res, next) {
-  res.status(err.status || 500).json({
-    success: false,
-    error: err.message || "Internal Server Error",
-  });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 module.exports = app;
