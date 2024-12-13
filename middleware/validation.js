@@ -334,10 +334,8 @@ const validateAdjustment = [
     .withMessage("Quantity must be a positive integer."),
   body("reason").notEmpty().withMessage("Reason is required."),
   body("type")
-    .isIn(["giveaway", "discount", "loss", "restock", "other"])
-    .withMessage(
-      "Type must be one of: giveaway, discount, loss, restock, other."
-    ),
+    .isIn(["giveaway", "discount", "loss", "restock"])
+    .withMessage("Type must be one of: giveaway, discount, loss, restock"),
   body("discountValue")
     .if((value, { req }) => req.body.type === "discount")
     .notEmpty()
@@ -370,10 +368,8 @@ const validateAdjustmentUpdate = [
   body("reason").optional().notEmpty().withMessage("Reason must not be empty."),
   body("type")
     .optional()
-    .isIn(["giveaway", "discount", "loss", "restock", "other"])
-    .withMessage(
-      "Type must be one of: giveaway, discount, loss, restock, other."
-    ),
+    .isIn(["giveaway", "discount", "loss", "restock"])
+    .withMessage("Type must be one of: giveaway, discount, loss, restock"),
   body("discountValue")
     .optional()
     .if((value, { req }) => req.body.type === "discount")
