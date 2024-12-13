@@ -1,4 +1,6 @@
 const { Op } = require("sequelize");
+const createError = require("http-errors");
+const { isSameData } = require("../utils/checks");
 
 class ProductService {
   constructor(db) {
@@ -14,6 +16,8 @@ class ProductService {
         {
           model: this.Category,
           attributes: ["id", "name"],
+        },
+        {
           model: this.Artist,
           attributes: ["name"],
         },
@@ -24,16 +28,20 @@ class ProductService {
 
   // Get product by id
   async getById(id) {
-    return await this.Product.findByPk(id, {
+    const product = await this.Product.findByPk(id, {
       include: [
         {
           model: this.Category,
           attributes: ["id", "name"],
+        },
+        {
           model: this.Artist,
           attributes: ["name"],
         },
       ],
     });
+    if (!product) throw createError(404, "Product not found");
+    return product;
   }
 
   // Search & filter products
@@ -88,12 +96,13 @@ class ProductService {
   async create(data) {
     // Check if artist exists
     const artist = await this.Artist.findByPk(data.artistId);
-    if (!artist) throw new Error("Artist not found. Cannot create product.");
+    if (!artist)
+      throw createError(404, "Artist not found. Cannot create product");
 
-    // Check if category exists (optional)
+    // Check if category exists
     if (data.categoryId) {
       const category = await this.Category.findByPk(data.categoryId);
-      if (!category) throw new Error("Category not found.");
+      if (!category) throw createError(404, "Category not found");
     }
 
     return await this.Product.create(data);
@@ -101,14 +110,23 @@ class ProductService {
 
   // Update product
   async update(id, data) {
-    const rowsUpdated = await this.Product.update(data, { where: { id } });
-    if (!rowsUpdated[0]) return null;
-    return await this.getById(id);
+    // Check if product exists
+    const product = await this.getById(id);
+
+    // Check if no changes were made
+    if (isSameData(product, data)) {
+      return { noChanges: true, data: product };
+    }
+
+    return await product.update(data);
   }
 
   // Delete product
   async delete(id) {
-    return await this.Product.destroy({ where: { id } });
+    // Check if product exists
+    const product = await this.getById(id);
+    await product.destroy();
+    return product;
   }
 }
 
