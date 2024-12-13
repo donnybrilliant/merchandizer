@@ -1,5 +1,6 @@
 const { Op } = require("sequelize");
 const { isSameData } = require("../utils/checks");
+const createError = require("http-errors");
 
 class ArtistService {
   constructor(db) {
@@ -14,7 +15,7 @@ class ArtistService {
   // Get artist by id
   async getById(id) {
     const artist = await this.Artist.findByPk(id);
-    if (!artist) throw new Error("Artist not found");
+    if (!artist) throw createError(400, "Artist not found");
     return artist;
   }
 
@@ -40,7 +41,10 @@ class ArtistService {
   async create(data) {
     const existingArtist = await this.getByName(data.name);
     if (existingArtist) {
-      throw new Error(`Artist with the name ${data.name} already exists.`); // 409
+      throw createError(
+        409,
+        `Artist with the name ${data.name} already exists`
+      );
     }
     return await this.Artist.create(data);
   }
@@ -57,7 +61,7 @@ class ArtistService {
 
     const existingArtist = await this.getByName(data.name);
     if (existingArtist) {
-      throw new Error(`Artist with the name ${data.name} already exists.`); // 409
+      throw createError(`Artist with the name ${data.name} already exists`);
     }
 
     return await artist.update(data);
