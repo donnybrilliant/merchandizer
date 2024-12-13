@@ -1,9 +1,12 @@
 const { Op } = require("sequelize");
+const createError = require("http-errors");
+const { isSameData } = require("../utils/checks");
 
 class ShowService {
   constructor(db) {
     this.Show = db.Show;
     this.Artist = db.Artist;
+    this.Tour = db.Tour;
   }
 
   // Get all shows
@@ -27,7 +30,16 @@ class ShowService {
 
   // Get show by id
   async getById(id) {
-    return await this.Show.findByPk(id);
+    const show = await this.Show.findByPk(id, {
+      include: [
+        {
+          model: this.Artist,
+          attributes: ["id", "name"],
+        },
+      ],
+    });
+    if (!show) throw createError(404, "Show not found");
+    return show;
   }
 
   // Search for shows by city, venue, date, country or artist
@@ -61,25 +73,33 @@ class ShowService {
   async create(data) {
     // Check if tour exists
     const tour = await this.Tour.findByPk(data.tourId);
-    if (!tour) throw new Error("Tour not found. Cannot create show");
+    if (!tour) throw createError(404, "Tour not found. Cannot create show");
 
     // Check if artist exists
     const artist = await this.Artist.findByPk(data.artistId);
-    if (!artist) throw new Error("Artist not found. Cannot create show");
+    if (!artist) throw createError(404, "Artist not found. Cannot create show");
 
     return await this.Show.create(data);
   }
 
   // Update show
   async update(id, data) {
-    const rowsUpdated = await this.Show.update(data, { where: { id } });
-    if (!rowsUpdated[0]) return null;
-    return await this.getById(id);
+    const show = await this.getById(id);
+
+    // Check if no changes are made
+    if (isSameData(show, data)) {
+      return { noChanges: true, data: show };
+    }
+
+    await show.update(data);
+    return show;
   }
 
   // Delete show
   async delete(id) {
-    return await this.Show.destroy({ where: { id } });
+    const show = await this.getById(id);
+    await show.destroy();
+    return show;
   }
 
   // Find the previous show for the current show in the same tour
@@ -87,11 +107,11 @@ class ShowService {
     const currentShow = await this.Show.findByPk(currentShowId);
 
     if (!currentShow) {
-      throw new Error("Current show not found");
+      throw createError(404, "Current show not found");
     }
 
     if (!currentShow.tourId) {
-      throw new Error("Current show does not belong to a tour");
+      throw createError(400, "Current show does not belong to a tour");
     }
 
     // Get all shows in the same tour, ordered by date
@@ -106,7 +126,7 @@ class ShowService {
     );
 
     if (showIndex <= 0) {
-      throw new Error("No previous show found for the tour");
+      throw createError(404, "No previous show found for the tour");
     }
 
     return shows[showIndex - 1];
