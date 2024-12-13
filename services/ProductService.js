@@ -2,7 +2,6 @@ const { Op } = require("sequelize");
 
 class ProductService {
   constructor(db) {
-    this.client = db.sequelize;
     this.Product = db.Product;
     this.Category = db.Category;
     this.Artist = db.Artist;
@@ -87,6 +86,16 @@ class ProductService {
 
   // Create product
   async create(data) {
+    // Check if artist exists
+    const artist = await this.Artist.findByPk(data.artistId);
+    if (!artist) throw new Error("Artist not found. Cannot create product.");
+
+    // Check if category exists (optional)
+    if (data.categoryId) {
+      const category = await this.Category.findByPk(data.categoryId);
+      if (!category) throw new Error("Category not found.");
+    }
+
     return await this.Product.create(data);
   }
 

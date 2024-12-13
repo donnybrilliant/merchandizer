@@ -2,7 +2,6 @@ const { Op } = require("sequelize");
 
 class ShowService {
   constructor(db) {
-    this.client = db.sequelize;
     this.Show = db.Show;
     this.Artist = db.Artist;
   }
@@ -10,6 +9,20 @@ class ShowService {
   // Get all shows
   async getAll() {
     return await this.Show.findAll();
+  }
+
+  // Get all shows on the tour
+  async getAllByTour(tourId) {
+    return await this.Show.findAll({
+      where: { tourId },
+      include: [
+        {
+          model: this.Artist,
+          attributes: ["id", "name"],
+        },
+      ],
+      attributes: ["id", "date", "venue", "city", "country"],
+    });
   }
 
   // Get show by id
@@ -46,6 +59,14 @@ class ShowService {
 
   // Create new show
   async create(data) {
+    // Check if tour exists
+    const tour = await this.Tour.findByPk(data.tourId);
+    if (!tour) throw new Error("Tour not found. Cannot create show");
+
+    // Check if artist exists
+    const artist = await this.Artist.findByPk(data.artistId);
+    if (!artist) throw new Error("Artist not found. Cannot create show");
+
     return await this.Show.create(data);
   }
 

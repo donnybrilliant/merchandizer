@@ -1,14 +1,38 @@
 class TourService {
   constructor(db) {
-    this.client = db.sequelize;
     this.Tour = db.Tour;
     this.Artist = db.Artist;
+    this.UserRoleTour = db.UserRoleTour;
+    this.User = db.User;
+    this.Show = db.Show;
   }
 
   // Get all tours
   async getAll() {
     return await this.Tour.findAll({
       include: [{ model: this.Artist, attributes: ["id", "name"] }],
+    });
+  }
+
+  // Get tours for user
+  async getAllForUser(userId) {
+    return await this.Tour.findAll({
+      include: [
+        { model: this.Artist, attributes: ["id", "name"] },
+        {
+          model: this.User,
+          attributes: [],
+          through: {
+            attributes: ["role"],
+          },
+          where: { id: userId },
+          required: true,
+        },
+        {
+          model: this.Show,
+          attributes: ["id", "date", "venue", "city", "country"],
+        },
+      ],
     });
   }
 
@@ -20,8 +44,25 @@ class TourService {
   }
 
   // Create new tour
-  async create(data) {
-    return await this.Tour.create(data);
+  async create(data, userId) {
+    // Check if artist exists
+    const artist = await this.Artist.findByPk(data.artistId);
+    if (!artist) {
+      throw new Error("Artist not found. Cannot create tour.");
+    }
+    const newTour = await this.Tour.create({
+      ...data,
+      createdBy: userId,
+    });
+
+    // Assign the user as the manager
+    await this.UserRoleTour.create({
+      userId,
+      tourId: newTour.id,
+      role: "manager",
+    });
+
+    return newTour;
   }
 
   // Update tour
