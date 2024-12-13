@@ -19,44 +19,37 @@ router.get("/", async (req, res, next) => {
         data: categories,
       });
     }
-    return res.status(200).json({
-      success: true,
-      data: categories,
-    });
+    return res.status(200).json({ success: true, data: categories });
   } catch (err) {
     next(err);
   }
 });
 
-router.get("/search", async (req, res, next) => {
+// Search categories by name
+router.get("/search", validateCategory, async (req, res, next) => {
   try {
-    const categories = await categoryService.search(req.query.name);
+    const { name } = req.query;
+    const result = await categoryService.search(name);
 
-    if (!categories.length) {
-      return res.status(404).json({
-        success: false,
+    if (!result.length) {
+      return res.status(200).json({
+        success: true,
         error: "No categories found matching the name",
+        data: result,
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      data: categories,
-    });
+    return res.status(200).json({ success: true, data: result });
   } catch (err) {
     next(err);
   }
 });
 
 // Get category by id
-router.get("/:id", async (req, res, next) => {
+router.get("/:categoryId", async (req, res, next) => {
   try {
-    const category = await categoryService.getById(req.params.id);
-    if (!category) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Category not found" });
-    }
+    const { categoryId } = req.params;
+    const category = await categoryService.getById(categoryId);
     return res.status(200).json({ success: true, data: category });
   } catch (err) {
     next(err);
@@ -74,41 +67,37 @@ router.post("/", validateCategory, async (req, res, next) => {
 });
 
 // Update category by id
-router.put("/:id", validateCategory, async (req, res, next) => {
+router.put("/:categoryId", validateCategory, async (req, res, next) => {
   try {
-    const category = await categoryService.getById(req.params.id);
-    if (!category) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Category not found" });
+    const { categoryId } = req.params;
+    const updatedCategory = await categoryService.update(categoryId, req.body);
+    if (updatedCategory.noChanges) {
+      return res.status(200).json({
+        success: true,
+        message: "No changes made to category",
+        data: updatedCategory.data,
+      });
     }
-    const updatedCategory = await categoryService.update(
-      req.params.id,
-      req.body
-    );
-    if (!updatedCategory) {
-      return res
-        .status(404)
-        .json({ success: false, error: "No changes made to category" });
-    }
-    return res.status(200).json({ success: true, data: updatedCategory });
+    return res.status(200).json({
+      success: true,
+      message: "Category updated",
+      data: updatedCategory,
+    });
   } catch (err) {
     next(err);
   }
 });
 
 // Delete category by id
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:categoryId", async (req, res, next) => {
   try {
-    const deleted = await categoryService.delete(req.params.id);
-    if (!deleted) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Category not found" });
-    }
-    return res
-      .status(200)
-      .json({ success: true, message: "Category deleted successfully" });
+    const { categoryId } = req.params;
+    const category = await categoryService.delete(categoryId);
+    return res.status(200).json({
+      success: true,
+      message: "Category deleted successfully",
+      data: category,
+    });
   } catch (err) {
     next(err);
   }
