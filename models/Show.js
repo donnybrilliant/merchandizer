@@ -44,7 +44,7 @@ module.exports = (sequelize, Sequelize) => {
     Show.belongsTo(models.Tour, {
       foreignKey: {
         name: "tourId",
-        allowNull: true,
+        allowNull: false,
       },
     });
     Show.belongsToMany(models.Product, {
