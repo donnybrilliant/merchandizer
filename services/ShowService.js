@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const createError = require("http-errors");
-const { isSameData } = require("../utils/checks");
+const { isSameData, checkDateRange } = require("../utils/checks");
 
 class ShowService {
   constructor(db) {
@@ -75,6 +75,10 @@ class ShowService {
     const tour = await this.Tour.findByPk(data.tourId);
     if (!tour) throw createError(404, "Tour not found. Cannot create show");
 
+
+      // Validate the show date
+    checkDateRange(data.date, tour.startDate, tour.endDate);
+
     // Check if artist exists
     const artist = await this.Artist.findByPk(data.artistId);
     if (!artist) throw createError(404, "Artist not found. Cannot create show");
@@ -86,10 +90,20 @@ class ShowService {
   async update(id, data) {
     const show = await this.getById(id);
 
+  // Validate the new show date, if provided
+  if (data.date) {
+    const tour = await this.Tour.findByPk(show.tourId);
+    if (!tour) throw createError(404, "Tour not found");
+
+    checkDateRange(data.date, tour.startDate, tour.endDate);
+  }
+
     // Check if no changes are made
     if (isSameData(show, data)) {
       return { noChanges: true, data: show };
     }
+
+    
 
     await show.update(data);
     return show;
