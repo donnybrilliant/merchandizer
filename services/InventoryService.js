@@ -1,4 +1,7 @@
-const calculateAdjustments = require("../utils/calculation");
+const createError = require("http-errors");
+const { calculateAdjustments } = require("../utils/calculation");
+const { isSameData, checkQuantities } = require("../utils/checks");
+
 class InventoryService {
   constructor(db) {
     this.ShowInventory = db.ShowInventory;
@@ -7,48 +10,82 @@ class InventoryService {
     this.Show = db.Show;
   }
 
+  // Check if inventory exists
+  async checkInventoryExists(showId, productId) {
+    // Check if show exists
+    const show = await this.Show.findByPk(showId);
+    if (!show) throw createError(404, "Show not found");
+
+    // Check if product exists
+    const product = await this.Product.findByPk(productId);
+    if (!product) throw createError(404, "Product not found");
+
+    const existingInventory = await this.ShowInventory.findOne({
+      where: { showId, productId },
+    });
+
+    if (existingInventory) {
+      throw new Error(`Inventory for product ${productId} already exists`);
+    }
+  }
+
+  // Get existing product ids from show
+  async getExistingProductIds(showId) {
+    // Check if show exists
+    const show = await this.Show.findByPk(showId);
+    if (!show) throw createError(404, "Show not found");
+
+    const existingInventories = await this.ShowInventory.findAll({
+      where: { showId },
+      attributes: ["productId"],
+      raw: true,
+    });
+    return existingInventories.map((inv) => inv.productId);
+  }
+
   // Get all inventory items for a specific show
   async getAllByShow(showId) {
+    // Check if show exists
+    const show = await this.Show.findByPk(showId);
+    if (!show) throw createError(404, "Show not found");
+
     return await this.ShowInventory.findAll({
       where: { showId },
       include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
     });
   }
 
-  // Get all inventory items for a specific show
+  // Get inventory item by show and product ID - correct name?
   async getById(showId, productId) {
-    return await this.ShowInventory.findOne({
+    // Check if product exists
+    const product = await this.Product.findByPk(productId);
+    if (!product) throw createError(404, "Product not found");
+
+    // Check if show exists
+    const show = await this.Show.findByPk(showId);
+    if (!show) throw createError(404, "Show not found");
+
+    const inventory = await this.ShowInventory.findOne({
       where: { showId, productId },
       include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
     });
+
+    if (!inventory) {
+      throw createError(404, "Inventory not found");
+    }
+
+    return inventory;
   }
 
   // Create inventory item for a show
-  async create(data) {
-    // Check if product exists
-    const product = await this.Product.findByPk(data.productId);
-    if (!product) throw new Error("Product not found.");
+  async create(showId, productId, data) {
+    // Validate inventory quantities
+    checkQuantities(data.startInventory, data.endInventory);
 
-    // Check if show exists
-    const show = await this.Show.findByPk(data.showId);
-    if (!show) throw new Error("Show not found.");
+    // Check if inventory already exists
+    await this.checkInventoryExists(showId, productId);
 
-    if (data.endInventory && data.endInventory > data.startInventory) {
-      throw new Error("End inventory cannot be more than start inventory");
-    }
-
-    const existingInventory = await this.ShowInventory.findOne({
-      where: {
-        showId: data.showId,
-        productId: data.productId,
-      },
-    });
-
-    if (existingInventory) {
-      throw new Error("Inventory for this product and show already exists");
-    }
-
-    return await this.ShowInventory.create(data);
+    return await this.ShowInventory.create({ showId, productId, ...data });
   }
 
   // Create multiple inventory items for a show
@@ -58,17 +95,11 @@ class InventoryService {
     for (const item of inventoryItems) {
       const { productId, startInventory, endInventory } = item;
 
-      if (endInventory && endInventory > startInventory) {
-        throw new Error("End inventory cannot be more than start inventory");
-      }
+      // Validate inventory quantities
+      checkQuantities(startInventory, endInventory);
 
-      const existingInventory = await this.ShowInventory.findOne({
-        where: { showId, productId },
-      });
-
-      if (existingInventory) {
-        throw new Error(`Inventory for product ${productId} already exists`);
-      }
+      // Check if inventory already exists
+      await this.checkInventoryExists(showId, productId);
 
       newInventories.push({ showId, productId, startInventory, endInventory });
     }
@@ -78,126 +109,117 @@ class InventoryService {
 
   // Update inventory item
   async update(showId, productId, data) {
-    if (data.endInventory && data.endInventory > data.startInventory) {
-      throw new Error("End inventory cannot be more than start inventory");
+    const inventory = await this.getById(showId, productId);
+
+    // Validate inventory quantities
+    checkQuantities(inventory.startInventory, data.endInventory);
+
+    // Check if no changes are made
+    if (isSameData(inventory, data)) {
+      return { noChanges: true, data: inventory };
     }
 
-    const existingInventory = await this.ShowInventory.findOne({
-      where: { showId, productId },
-    });
-
-    if (!existingInventory) {
-      throw new Error("Inventory not found");
-    }
-
-    const rowsUpdated = await this.ShowInventory.update(data, {
-      where: { showId, productId },
-    });
-
-    if (!rowsUpdated[0]) return null;
-    return await this.ShowInventory.findOne({ where: { showId, productId } });
+    return inventory.update(data);
   }
 
   // Update multiple inventory items for a show
   async updateMany(showId, inventoryItems) {
-    const updatedInventories = [];
+    const updated = [];
+    const unchanged = [];
 
     for (const item of inventoryItems) {
       const { productId, ...data } = item;
 
-      if (data.endInventory && data.endInventory > data.startInventory) {
-        throw new Error("End inventory cannot be more than start inventory");
+      const inventory = await this.getById(showId, productId);
+
+      // Validate inventory quantities
+      checkQuantities(inventory.startInventory, data.endInventory);
+
+      // Check if no changes are made
+      if (isSameData(inventory, data)) {
+        unchanged.push({
+          message: "No changes made",
+          data: inventory.get({ plain: true }),
+        });
+        continue;
       }
 
-      const rowsUpdated = await this.ShowInventory.update(data, {
-        where: { showId, productId },
+      await inventory.update(data);
+      updated.push({
+        message: "Inventory updated",
+        data: inventory.get({ plain: true }),
       });
-
-      if (!rowsUpdated[0]) return null;
-
-      const updatedInventory = await this.ShowInventory.findOne({
-        where: { showId, productId },
-      });
-
-      updatedInventories.push(updatedInventory);
     }
 
-    return updatedInventories;
+    return { updated, unchanged };
   }
 
   // Delete inventory item
   async delete(showId, productId) {
-    return await this.ShowInventory.destroy({ where: { showId, productId } });
+    const inventory = await this.getById(showId, productId);
+    await inventory.destroy();
+    return inventory;
   }
 
+  // Copy inventory from the previous show
   async copyInventoryFromPreviousShow(currentShowId, previousShow) {
     const previousInventories = await this.ShowInventory.findAll({
       where: { showId: previousShow.id },
     });
 
     if (!previousInventories.length) {
-      throw new Error("No inventories found for the previous show."); // show not found?
+      throw createError(404, "No inventories found for the previous show");
     }
 
-    // Calculate adjusted endInventory for each product
-    const adjustedEndInventories = await Promise.all(
-      previousInventories.map(async (inventory) => {
-        if (inventory.endInventory === null) {
-          throw new Error(
-            `End inventory for productId ${inventory.productId} is null. Cannot copy inventory.`
-          );
-        }
-        // Find adjustments
-        const adjustments = await this.Adjustment.findAll({
-          where: { showInventoryId: inventory.id },
+    const existingProductIds = await this.getExistingProductIds(currentShowId);
+
+    const updated = [];
+    const unchanged = [];
+
+    for (const inventory of previousInventories) {
+      const { productId, endInventory } = inventory;
+
+      if (existingProductIds.includes(productId)) {
+        unchanged.push({
+          message: "Inventory already exists",
+          productId,
         });
+        continue;
+      }
 
-        // Calculate adjustments
-        const totalAdjustment = calculateAdjustments(adjustments);
+      if (endInventory === null) {
+        throw createError(
+          400,
+          `End inventory for productId ${productId} doesn't exist. Cannot copy inventory`
+        );
+      }
 
-        const adjustedEndInventory = inventory.endInventory + totalAdjustment;
+      // Calculate adjustments
+      const adjustments = await this.Adjustment.findAll({
+        where: { showInventoryId: inventory.id },
+      });
 
-        /*         if (isNaN(adjustedEndInventory) || adjustedEndInventory < 0) {
-          throw new Error(
-            `Invalid adjusted end inventory for productId ${inventory.productId}: ${adjustedEndInventory}`
-          );
-        } */
+      const totalAdjustment = adjustments.length
+        ? calculateAdjustments(adjustments)
+        : 0;
 
-        return {
-          productId: inventory.productId,
-          adjustedEndInventory,
-        };
-      })
-    );
+      const startInventory = endInventory + totalAdjustment;
 
-    // Create startInventory for current show.
-    await Promise.all(
-      adjustedEndInventories.map(async (inventory) => {
-        const productId = inventory.productId;
-        const adjustedEndInventory = inventory.adjustedEndInventory;
+      // Create new inventory
+      await this.ShowInventory.create({
+        showId: currentShowId,
+        productId,
+        startInventory,
+      });
 
-        const existingInventory = await this.ShowInventory.findOne({
-          where: { showId: currentShowId, productId },
-        });
+      updated.push({
+        message: "Inventory copied",
+        productId,
+        startInventory,
+      });
+    }
 
-        if (!existingInventory) {
-          await this.ShowInventory.create({
-            showId: currentShowId,
-            productId: productId,
-            startInventory: adjustedEndInventory,
-          });
-        }
-      })
-    );
-
-    // Return the updated inventory for the current show
-    const updatedInventory = await this.getAllByShow(currentShowId);
-
-    return {
-      success: true,
-      message: "Start inventory created from previous show for missing items.",
-      data: updatedInventory,
-    };
+    return { updated, unchanged };
   }
 }
 
