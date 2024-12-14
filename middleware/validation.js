@@ -46,7 +46,8 @@ const validateRegister = [
 ];
 
 // Phone number validation
-const validatePhoneNumber = [
+const validateUserUpdate = [
+  validateNonEmptyBody(),
   check("phone")
     .optional()
     .isMobilePhone("any")
@@ -145,6 +146,11 @@ const validateShow = [
     .withMessage("Artist ID is required")
     .isInt()
     .withMessage("Artist ID must be an integer"),
+  check("tourId")
+    .notEmpty()
+    .withMessage("Tour ID is required")
+    .isInt()
+    .withMessage("Tour ID must be an integer"),
   check("getInTime")
     .optional()
     .matches(timeRegex)
@@ -323,6 +329,7 @@ const validateMultipleInventory = [
   body()
     .isArray()
     .withMessage("Request body must be an array of inventory items"),
+  validateNonEmptyBody(),
   body("*.productId")
     .if((value, { req }) => Array.isArray(req.body))
     .notEmpty()
@@ -347,6 +354,7 @@ const validateMultipleInventoryUpdate = [
   body()
     .isArray()
     .withMessage("Request body must be an array of inventory items"),
+  validateNonEmptyBody(),
   body("*.productId")
     .if((value, { req }) => Array.isArray(req.body))
     .notEmpty()
@@ -443,7 +451,7 @@ const validateAdjustmentUpdate = [
 module.exports = {
   validateLogin,
   validateRegister,
-  validatePhoneNumber,
+  validateUserUpdate,
   validateNewPassword,
   validateArtist,
   validateTour,
