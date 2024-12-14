@@ -42,8 +42,19 @@ router.put("/:userId", authorize("manageUsers"), async (req, res, next) => {
     const { tourId, userId } = req.params;
     const { role } = req.body;
 
-    const result = await roleService.updateUserRole(tourId, userId, role);
-    return res.status(200).json({ success: true, data: result });
+    const updatedRole = await roleService.updateUserRole(tourId, userId, role);
+    if (updatedRole.noChanges) {
+      return res.status(200).json({
+        success: true,
+        message: "No changes made to user role",
+        data: updatedRole.data,
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "User role updated successfully",
+      data: updatedRole.data,
+    });
   } catch (error) {
     next(error);
   }
@@ -54,8 +65,12 @@ router.delete("/:userId", authorize("manageUsers"), async (req, res, next) => {
   try {
     const { tourId, userId } = req.params;
 
-    const result = await roleService.deleteUserFromTour(tourId, userId);
-    return res.status(200).json({ success: true, data: result });
+    const deletedRole = await roleService.deleteUserFromTour(tourId, userId);
+    return res.status(200).json({
+      success: true,
+      message: "User removed from the tour",
+      data: deletedRole.data,
+    });
   } catch (error) {
     next(error);
   }
