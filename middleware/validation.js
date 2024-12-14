@@ -15,6 +15,16 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
+// Reusable middleware to ensure body is not empty
+const validateNonEmptyBody = () => {
+  return body().custom((value, { req }) => {
+    if (!Object.keys(req.body).length) {
+      throw new Error("At least one field must is required for updating");
+    }
+    return true;
+  });
+};
+
 // Login validation
 const validateLogin = [
   check("email").isEmail().withMessage("A valid email is required"),
@@ -36,7 +46,8 @@ const validateRegister = [
 ];
 
 // Phone number validation
-const validatePhoneNumber = [
+const validateUserUpdate = [
+  validateNonEmptyBody(),
   check("phone")
     .optional()
     .isMobilePhone("any")
@@ -89,6 +100,34 @@ const validateTour = [
   handleValidationErrors,
 ];
 
+const validateTourUpdate = [
+  validateNonEmptyBody(),
+  check("name")
+    .optional()
+    .notEmpty()
+    .withMessage("Tour name must not be empty"),
+  check("startDate")
+    .optional()
+    .isISO8601()
+    .withMessage("Start date must be a valid date (YYYY-MM-DD)"),
+  check("endDate")
+    .optional()
+    .isISO8601()
+    .withMessage("End date must be a valid date (YYYY-MM-DD)")
+    .custom((endDate, { req }) => {
+      const startDate = req.body.startDate;
+      if (startDate && new Date(endDate) < new Date(startDate)) {
+        throw new Error("End date must be after start date");
+      }
+      return true;
+    }),
+  check("artistId")
+    .optional()
+    .isInt()
+    .withMessage("Artist ID must be a valid integer"),
+  handleValidationErrors,
+];
+
 // Regex to validate time in HH:mm format
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -107,6 +146,11 @@ const validateShow = [
     .withMessage("Artist ID is required")
     .isInt()
     .withMessage("Artist ID must be an integer"),
+  check("tourId")
+    .notEmpty()
+    .withMessage("Tour ID is required")
+    .isInt()
+    .withMessage("Tour ID must be an integer"),
   check("getInTime")
     .optional()
     .matches(timeRegex)
@@ -128,6 +172,7 @@ const validateShow = [
 
 // Update show validation
 const validateShowUpdate = [
+  validateNonEmptyBody(),
   check("date")
     .optional()
     .isISO8601()
@@ -207,6 +252,7 @@ const validateProduct = [
 
 // Update product validation
 const validateProductUpdate = [
+  validateNonEmptyBody(),
   check("name")
     .optional()
     .isLength({ max: 100 })
@@ -261,6 +307,7 @@ const validateSingleInventory = [
 
 // Update single inventory validation
 const validateSingleInventoryUpdate = [
+  validateNonEmptyBody(),
   check("productId")
     .notEmpty()
     .withMessage("Product ID is required")
@@ -282,6 +329,7 @@ const validateMultipleInventory = [
   body()
     .isArray()
     .withMessage("Request body must be an array of inventory items"),
+  validateNonEmptyBody(),
   body("*.productId")
     .if((value, { req }) => Array.isArray(req.body))
     .notEmpty()
@@ -306,6 +354,7 @@ const validateMultipleInventoryUpdate = [
   body()
     .isArray()
     .withMessage("Request body must be an array of inventory items"),
+  validateNonEmptyBody(),
   body("*.productId")
     .if((value, { req }) => Array.isArray(req.body))
     .notEmpty()
@@ -362,6 +411,7 @@ const validateAdjustment = [
 
 // Update adjustment validation
 const validateAdjustmentUpdate = [
+  validateNonEmptyBody(),
   body("quantity")
     .optional()
     .isInt({ min: 1 })
@@ -401,10 +451,11 @@ const validateAdjustmentUpdate = [
 module.exports = {
   validateLogin,
   validateRegister,
-  validatePhoneNumber,
+  validateUserUpdate,
   validateNewPassword,
   validateArtist,
   validateTour,
+  validateTourUpdate,
   validateShow,
   validateShowUpdate,
   validateCategory,

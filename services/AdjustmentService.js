@@ -1,19 +1,34 @@
+const createError = require("http-errors");
+const { isSameData } = require("../utils/checks");
+
 class AdjustmentService {
   constructor(db) {
     this.Adjustment = db.Adjustment;
     this.ShowInventory = db.ShowInventory;
     this.Product = db.Product;
     this.User = db.User;
+    this.Show = db.Show;
   }
 
-  // Get ShowInventory based on showId and productId
+  // Get ShowInventory for a product in a show
   async getShowInventory(showId, productId) {
+    // Check if show exists
+    const show = await this.Show.findByPk(showId);
+    if (!show) throw createError(404, "Show not found");
+
+    // Check if product exists
+    const product = await this.Product.findByPk(productId);
+    if (!product) throw createError(404, "Product not found");
+
     const showInventory = await this.ShowInventory.findOne({
       where: { showId, productId },
     });
 
     if (!showInventory) {
-      throw new Error("No inventory found for the specified show and product.");
+      throw createError(
+        404,
+        "No inventory found for the specified show and product"
+      );
     }
 
     return showInventory;
@@ -21,6 +36,10 @@ class AdjustmentService {
 
   // Get all adjustments for a show
   async getAllByShow(showId) {
+    // Check if tour exists
+    const show = await this.Show.findByPk(showId);
+    if (!show) throw createError(404, "Show not found");
+
     return await this.Adjustment.findAll({
       include: [
         {
@@ -46,16 +65,15 @@ class AdjustmentService {
     });
   }
 
-  // Get adjustments for a product
+  // Get all adjustments for a product
   async getByProduct(showId, productId) {
     const showInventory = await this.getShowInventory(showId, productId);
+
     return await this.Adjustment.findAll({
       where: { showInventoryId: showInventory.id },
-
       include: [
         {
           model: this.ShowInventory,
-          attributes: ["id"],
           where: { showId },
           include: [
             { model: this.Product, attributes: ["id", "name", "price"] },
@@ -69,48 +87,46 @@ class AdjustmentService {
     });
   }
 
-  // Create new adjustment
+  // Get adjustment by ID
+  async getById(adjustmentId) {
+    const adjustment = await this.Adjustment.findByPk(adjustmentId);
+    if (!adjustment) throw createError(404, "Adjustment not found");
+    return adjustment;
+  }
+
+  // Create a new adjustment
   async create(showId, productId, userId, data) {
     const { quantity, reason, type, discountValue, discountType } = data;
-    // Check if show inventory exists
     const showInventory = await this.getShowInventory(showId, productId);
-    if (!showInventory)
-      throw new Error("No inventory found for the specified show and product.");
-
-    if (quantity <= 0) throw new Error("Quantity must be a positive number.");
 
     return await this.Adjustment.create({
       showInventoryId: showInventory.id,
+      userId,
       quantity,
       reason,
       type,
       discountValue,
       discountType,
-      userId,
     });
   }
 
-  // Update adjustment
+  // Update an existing adjustment
   async update(adjustmentId, data) {
-    const adjustment = await this.Adjustment.findByPk(adjustmentId);
+    const adjustment = await this.getById(adjustmentId);
 
-    if (!adjustment) {
-      throw new Error("Adjustment not found");
+    if (isSameData(adjustment, data)) {
+      return { noChanges: true, data: adjustment };
     }
 
-    const rowsUpdated = await adjustment.update(data);
-
-    if (!rowsUpdated[0]) return null;
-
-    return await this.Adjustment.findByPk(adjustmentId);
+    await adjustment.update(data);
+    return adjustment;
   }
 
-  // Delete adjustment
+  // Delete an adjustment
   async delete(adjustmentId) {
-    const rowsDeleted = await this.Adjustment.destroy({
-      where: { id: adjustmentId },
-    });
-    return rowsDeleted > 0;
+    const adjustment = await this.getById(adjustmentId);
+    await adjustment.destroy();
+    return adjustment;
   }
 }
 

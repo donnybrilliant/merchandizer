@@ -1,6 +1,5 @@
 class RoleService {
   constructor(db) {
-    this.client = db.sequelize;
     this.Tour = db.Tour;
     this.UserRoleTour = db.UserRoleTour;
     this.User = db.User;
@@ -8,7 +7,7 @@ class RoleService {
 
   // Check role for user on tour for middleware auth
   async checkUserRoleTour(userId, tourId) {
-    return await db.UserRoleTour.findOne({
+    return await this.UserRoleTour.findOne({
       where: { userId, tourId },
     });
   }
@@ -104,7 +103,11 @@ class RoleService {
       throw new Error("User is not assigned to this tour");
     }
 
-    // Update the role
+    // Check if the role is the same
+    if (userRoleTour.role === newRole) {
+      return { noChanges: true, data: userRoleTour };
+    }
+
     userRoleTour.role = newRole;
     await userRoleTour.save();
 
@@ -133,11 +136,17 @@ class RoleService {
       where: { tourId, userId },
     });
 
-    if (rowsDeleted === 0) {
+    if (!userRoleTour) {
       throw new Error("User not found in this tour");
     }
 
-    return { success: true, message: "User removed from the tour" };
+    await userRoleTour.destroy();
+
+    return {
+      success: true,
+      message: "User removed from the tour",
+      data: userRoleTour,
+    };
   }
 }
 

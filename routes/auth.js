@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const UserService = require("../services/UserService");
 const userService = new UserService(db);
+const createError = require("http-errors");
 const { hashPassword } = require("../utils/hashPassword"); // Import the utility
 const { isAuth } = require("../middleware/auth");
 const {
@@ -21,9 +22,7 @@ router.post("/login", validateLogin, async (req, res, next) => {
     const user = await userService.getByEmail(email);
 
     if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Incorrect email or password" });
+      throw createError(401, "Incorrect email or password");
     }
 
     // Hash the provided password with the users salt
@@ -31,9 +30,7 @@ router.post("/login", validateLogin, async (req, res, next) => {
 
     // Verify the hashed password
     if (!crypto.timingSafeEqual(user.encryptedPassword, hashedPassword)) {
-      return res
-        .status(401)
-        .json({ success: false, error: "Incorrect email or password" });
+      throw createError(401, "Incorrect email or password");
     }
 
     // Generate a JWT
@@ -67,10 +64,7 @@ router.post("/register", validateRegister, async (req, res, next) => {
     const existingUser = await userService.getByEmail(email);
 
     if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        error: "Email is already in use",
-      });
+      throw createError(409, "Email is already in use");
     }
 
     // Hash the new password and generate a salt
@@ -106,23 +100,13 @@ router.patch(
     try {
       const user = await userService.getByEmail(req.user.email);
 
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          error: "User not found",
-        });
-      }
-
       // Verify old password
       const { hashedPassword: oldHashedPassword } = await hashPassword(
         oldPassword,
         user.salt
       );
       if (!crypto.timingSafeEqual(user.encryptedPassword, oldHashedPassword)) {
-        return res.status(400).json({
-          success: false,
-          error: "Incorrect old password",
-        });
+        throw createError(400, "Incorrect old password");
       }
 
       // Hash the new password

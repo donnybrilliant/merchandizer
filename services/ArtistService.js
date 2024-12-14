@@ -14,16 +14,18 @@ class ArtistService {
 
   // Get artist by id
   async getById(id) {
+    // Check it the artist exists
     const artist = await this.Artist.findByPk(id);
     if (!artist) throw createError(400, "Artist not found");
     return artist;
   }
 
-  // Get artist by name
-  async getByName(name) {
-    return await this.Artist.findOne({
-      where: { name },
-    });
+  // Check if artist name already exists
+  async checkName(name) {
+    const existingArtist = await this.Artist.findOne({ where: { name } });
+    if (existingArtist) {
+      throw createError(409, `Artist with the name ${name} already exists`);
+    }
   }
 
   // Search artist by name
@@ -39,13 +41,8 @@ class ArtistService {
 
   // Create new artist
   async create(data) {
-    const existingArtist = await this.getByName(data.name);
-    if (existingArtist) {
-      throw createError(
-        409,
-        `Artist with the name ${data.name} already exists`
-      );
-    }
+    // Check if the name is taken
+    await this.checkName(data.name);
     return await this.Artist.create(data);
   }
 
@@ -59,16 +56,15 @@ class ArtistService {
       return { noChanges: true, data: artist };
     }
 
-    const existingArtist = await this.getByName(data.name);
-    if (existingArtist) {
-      throw createError(`Artist with the name ${data.name} already exists`);
-    }
+    // Check that the name is taken
+    await this.checkName(data.name);
 
     return await artist.update(data);
   }
 
   // Delete artist
   async delete(id) {
+    // Check if the artist exists
     const artist = await this.getById(id);
     await artist.destroy();
     return artist;

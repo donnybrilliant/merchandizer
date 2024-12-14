@@ -36,8 +36,8 @@ router.get("/search", async (req, res, next) => {
     const products = await productService.search(req.query);
 
     if (!products.length) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         data: products,
         message: "No products found matching the query",
       });
@@ -53,14 +53,10 @@ router.get("/search", async (req, res, next) => {
 });
 
 // Get product by id
-router.get("/:id", async (req, res, next) => {
+router.get("/:productId", async (req, res, next) => {
   try {
-    const product = await productService.getById(req.params.id);
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Product not found" });
-    }
+    const { productId } = req.params;
+    const product = await productService.getById(productId);
     return res.status(200).json({ success: true, data: product });
   } catch (err) {
     next(err);
@@ -78,19 +74,16 @@ router.post("/", validateProduct, async (req, res, next) => {
 });
 
 // Update product by id
-router.put("/:id", validateProductUpdate, async (req, res, next) => {
+router.put("/:productId", validateProductUpdate, async (req, res, next) => {
   try {
-    const product = await productService.getById(req.params.id);
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Product not found" });
-    }
-    const updatedProduct = await productService.update(req.params.id, req.body);
-    if (!updatedProduct) {
-      return res
-        .status(404)
-        .json({ success: false, error: "No changes made to product" });
+    const { productId } = req.params;
+    const updatedProduct = await productService.update(productId, req.body);
+    if (updatedProduct.noChanges) {
+      return res.status(200).json({
+        success: true,
+        message: "No changes made to product",
+        data: updatedProduct.data,
+      });
     }
     return res.status(200).json({ success: true, data: updatedProduct });
   } catch (err) {
@@ -99,17 +92,15 @@ router.put("/:id", validateProductUpdate, async (req, res, next) => {
 });
 
 // Delete product by id
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:productId", async (req, res, next) => {
   try {
-    const deleted = await productService.delete(req.params.id);
-    if (!deleted) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Product not found" });
-    }
-    return res
-      .status(200)
-      .json({ success: true, message: "Product deleted successfully" });
+    const { productId } = req.params;
+    const product = await productService.delete(productId);
+    return res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+      data: product,
+    });
   } catch (err) {
     next(err);
   }
@@ -127,49 +118,53 @@ const upload = multer({
 });
 
 // Update product image
-router.patch("/:id/image", upload.single("image"), async (req, res, next) => {
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      error: "No product image file provided",
-    });
-  }
-
-  try {
-    // Resize and convert the image to PNG
-    const resizedBuffer = await sharp(req.file.buffer)
-      .resize(300, 300)
-      .png()
-      .toBuffer();
-
-    // Update user's avatar and MIME type
-    const updateData = {
-      image: resizedBuffer,
-    };
-
-    const updatedProduct = await productService.update(
-      req.params.id,
-      updateData
-    );
-    if (!updatedProduct) {
-      return res
-        .status(404)
-        .json({ success: false, error: "No changes made to product" });
+router.patch(
+  "/:productId/image",
+  upload.single("image"),
+  async (req, res, next) => {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: "No product image file provided",
+      });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Product image updated successfully",
-    });
-  } catch (err) {
-    next(err);
+    try {
+      const { productId } = req.params;
+      // Resize and convert the image to PNG
+      const resizedBuffer = await sharp(req.file.buffer)
+        .resize(300, 300)
+        .png()
+        .toBuffer();
+
+      const updateData = {
+        image: resizedBuffer,
+      };
+
+      const updatedProduct = await productService.update(productId, updateData);
+      if (updatedProduct.noChanges) {
+        return res.status(200).json({
+          success: true,
+          message: "No changes made to product",
+          data: updatedProduct.data,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Product image updated successfully",
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Get product image
-router.get("/:id/image", async (req, res, next) => {
+router.get("/:productId/image", async (req, res, next) => {
   try {
-    const product = await productService.getById(req.params.id);
+    const { productId } = req.params;
+    const product = await productService.getById(productId);
     if (!product) {
       return res
         .status(404)

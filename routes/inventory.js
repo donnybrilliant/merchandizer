@@ -16,12 +16,14 @@ const { authorize } = require("../middleware/auth");
 // Get inventory for a specific show
 router.get("/", authorize("viewInventory"), async (req, res, next) => {
   try {
-    const showId = req.params.showId;
+    const { showId } = req.params;
     const inventories = await inventoryService.getAllByShow(showId);
     if (!inventories.length) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No inventory found for the show" });
+      return res.status(200).json({
+        success: true,
+        message: "No inventory exists for the show",
+        data: inventories,
+      });
     }
     return res.status(200).json({ success: true, data: inventories });
   } catch (err) {
@@ -35,17 +37,10 @@ router.get(
   authorize("viewInventory"),
   async (req, res, next) => {
     try {
-      const showId = req.params.showId;
-      const productId = req.params.productId;
-      const inventories = await inventoryService.getById(showId, productId);
+      const { showId, productId } = req.params;
+      const inventory = await inventoryService.getById(showId, productId);
 
-      if (!inventories) {
-        return res.status(404).json({
-          success: false,
-          message: "No inventory found for the show and product",
-        });
-      }
-      return res.status(200).json({ success: true, data: inventories });
+      return res.status(200).json({ success: true, data: inventory });
     } catch (err) {
       next(err);
     }
@@ -59,7 +54,7 @@ router.post(
   validateMultipleInventory,
   async (req, res, next) => {
     try {
-      const showId = req.params.showId;
+      const { showId } = req.params;
 
       const inventories = await inventoryService.createMany(showId, req.body);
 
@@ -78,12 +73,20 @@ router.post("/copy", authorize("manageInventory"), async (req, res, next) => {
     const previousShow = await showService.findPreviousShow(currentShowId);
 
     // Pass the previous show to copy the inventory
-    const result = await inventoryService.copyInventoryFromPreviousShow(
-      currentShowId,
-      previousShow
-    );
+    const { updated, unchanged } =
+      await inventoryService.copyInventoryFromPreviousShow(
+        currentShowId,
+        previousShow
+      );
 
-    return res.status(200).json({ success: true, data: result });
+    return res.status(200).json({
+      success: true,
+      message: "Inventory copy processed",
+      data: {
+        updated,
+        unchanged,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -96,14 +99,13 @@ router.post(
   validateSingleInventory,
   async (req, res, next) => {
     try {
-      const showId = req.params.showId;
-      const productId = req.params.productId;
+      const { showId, productId } = req.params;
 
-      const newInventory = await inventoryService.create({
-        ...req.body,
+      const newInventory = await inventoryService.create(
         showId,
         productId,
-      });
+        req.body
+      );
 
       return res.status(201).json({ success: true, data: newInventory });
     } catch (err) {
@@ -119,18 +121,21 @@ router.put(
   validateMultipleInventoryUpdate,
   async (req, res, next) => {
     try {
-      const showId = req.params.showId;
+      const { showId } = req.params;
 
-      const inventories = await inventoryService.updateMany(showId, req.body);
+      const { updated, unchanged } = await inventoryService.updateMany(
+        showId,
+        req.body
+      );
 
-      if (!inventories) {
-        return res.status(404).json({
-          success: false,
-          message: "Inventory item not found or no changes made",
-        });
-      }
-
-      return res.status(200).json({ success: true, data: inventories });
+      return res.status(200).json({
+        success: true,
+        message: "Inventory update processed",
+        data: {
+          updated,
+          unchanged,
+        },
+      });
     } catch (err) {
       next(err);
     }
@@ -144,8 +149,7 @@ router.put(
   validateSingleInventoryUpdate,
   async (req, res, next) => {
     try {
-      const showId = req.params.showId;
-      const productId = req.params.productId;
+      const { showId, productId } = req.params;
 
       const updatedInventory = await inventoryService.update(
         showId,
@@ -153,10 +157,11 @@ router.put(
         req.body
       );
 
-      if (!updatedInventory) {
-        return res.status(404).json({
-          success: false,
+      if (updatedInventory.noChanges) {
+        return res.status(200).json({
+          success: true,
           message: "No changes made to inventory",
+          data: updatedInventory.data,
         });
       }
 
@@ -173,20 +178,14 @@ router.delete(
   authorize("deleteInventory"),
   async (req, res, next) => {
     try {
-      const showId = req.params.showId;
-      const productId = req.params.productId;
+      const { showId, productId } = req.params;
 
-      const deleted = await inventoryService.delete(showId, productId);
-
-      if (!deleted) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Inventory item not found" });
-      }
+      const inventory = await inventoryService.delete(showId, productId);
 
       return res.status(200).json({
         success: true,
         message: "Inventory item deleted successfully",
+        data: inventory,
       });
     } catch (err) {
       next(err);

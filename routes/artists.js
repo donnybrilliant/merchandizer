@@ -31,8 +31,9 @@ router.get("/search", validateArtist, async (req, res, next) => {
 
     if (!result.length) {
       return res.status(200).json({
-        success: false,
+        success: true,
         error: "No artists found matching the name",
+        data: result,
       });
     }
 
