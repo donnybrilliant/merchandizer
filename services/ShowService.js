@@ -16,6 +16,10 @@ class ShowService {
 
   // Get all shows on the tour
   async getAllByTour(tourId) {
+    // Check that tour exists
+    const tour = await this.Tour.findByPk(tourId);
+    if (!tour) throw createError(404, "Show not found");
+
     return await this.Show.findAll({
       where: { tourId },
       include: [
@@ -70,40 +74,37 @@ class ShowService {
   }
 
   // Create new show
-  async create(data) {
+  async create(tourId, data) {
     // Check if tour exists
-    const tour = await this.Tour.findByPk(data.tourId);
+    const tour = await this.Tour.findByPk(tourId);
     if (!tour) throw createError(404, "Tour not found. Cannot create show");
 
-
-      // Validate the show date
+    // Validate the show date
     checkDateRange(data.date, tour.startDate, tour.endDate);
 
     // Check if artist exists
     const artist = await this.Artist.findByPk(data.artistId);
     if (!artist) throw createError(404, "Artist not found. Cannot create show");
 
-    return await this.Show.create(data);
+    return await this.Show.create({ ...data, tourId });
   }
 
   // Update show
   async update(id, data) {
     const show = await this.getById(id);
 
-  // Validate the new show date, if provided
-  if (data.date) {
-    const tour = await this.Tour.findByPk(show.tourId);
-    if (!tour) throw createError(404, "Tour not found");
+    // Validate the new show date, if provided
+    if (data.date) {
+      const tour = await this.Tour.findByPk(show.tourId);
+      if (!tour) throw createError(404, "Tour not found");
 
-    checkDateRange(data.date, tour.startDate, tour.endDate);
-  }
+      checkDateRange(data.date, tour.startDate, tour.endDate);
+    }
 
     // Check if no changes are made
     if (isSameData(show, data)) {
       return { noChanges: true, data: show };
     }
-
-    
 
     await show.update(data);
     return show;

@@ -83,7 +83,8 @@ router.post(
   validateShow,
   async (req, res, next) => {
     try {
-      const show = await showService.create(req.body);
+      const { tourId } = req.params;
+      const show = await showService.create(tourId, req.body);
       return res.status(201).json({
         success: true,
         data: show,
