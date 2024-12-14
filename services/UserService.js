@@ -1,21 +1,26 @@
+const { isSameData } = require("../utils/checks");
+
 class UserService {
   constructor(db) {
-    this.client = db.sequelize;
     this.User = db.User;
   }
 
   // Get user by email
   async getByEmail(email) {
-    return await this.User.findOne({
+    const user = await this.User.findOne({
       where: { email },
     });
+    if (!user) throw createError(404, "User not found");
+    return user;
   }
 
   // Get user by id
   async getById(id) {
-    return await this.User.findByPk(id, {
+    const user = await this.User.findByPk(id, {
       attributes: { exclude: ["encryptedPassword", "salt"] },
     });
+    if (!user) throw createError(404, "User not found");
+    return user;
   }
 
   // Get all users
@@ -40,16 +45,22 @@ class UserService {
 
   // Update user
   async update(id, data) {
-    const rowsUpdated = await this.User.update(data, {
-      where: { id },
-    });
-    if (rowsUpdated[0] === 0) return null;
-    return await this.getById(id);
+    const user = await this.getById(id);
+
+    // Check if the data is the same as the user
+    if (isSameData(user, data)) {
+      return { noChanges: true, data: user };
+    }
+
+    await user.update(data);
+    return user;
   }
 
   // Delete user
   async delete(id) {
-    return await this.User.destroy({ where: { id } });
+    const user = await this.getById(id);
+    await user.destroy();
+    return user;
   }
 
   // Change password
