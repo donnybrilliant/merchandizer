@@ -6,7 +6,7 @@ const userService = new UserService(db);
 const multer = require("multer");
 const sharp = require("sharp");
 const { isAuth, adminOnly } = require("../middleware/auth");
-const { validatePhoneNumber } = require("../middleware/validation");
+const { validateUserUpdate } = require("../middleware/validation");
 
 router.use(isAuth);
 
@@ -29,10 +29,6 @@ router.get("/me", async (req, res, next) => {
   try {
     const user = await userService.getById(req.user.id);
 
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-
     return res.status(200).json({
       success: true,
       data: {
@@ -46,16 +42,9 @@ router.get("/me", async (req, res, next) => {
 });
 
 // Update current user
-router.patch("/me", validatePhoneNumber, async (req, res, next) => {
+router.put("/me", validateUserUpdate, async (req, res, next) => {
   const { firstName, lastName, phone } = req.body;
   const userId = req.user.id;
-
-  if (!firstName && !lastName && !phone) {
-    return res.status(400).json({
-      success: false,
-      error: "At least one field must be provided to update",
-    });
-  }
 
   try {
     // Prepare update data
@@ -67,10 +56,11 @@ router.patch("/me", validatePhoneNumber, async (req, res, next) => {
     // Update user in the database
     const updatedUser = await userService.update(userId, updateData);
 
-    if (!updatedUser) {
-      return res.status(404).json({
-        success: false,
-        error: "No changes made to profile",
+    if (updatedUser.noChanges) {
+      return res.status(200).json({
+        success: true,
+        message: "No changes made to profile",
+        data: updatedUser.data,
       });
     }
 
@@ -92,14 +82,11 @@ router.delete("/me", async (req, res, next) => {
   try {
     const user = await userService.getById(userId);
 
-    if (!user) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-
-    await userService.delete(userId);
+    const deletedUser = await userService.delete(userId);
     return res.status(200).json({
       success: true,
       message: "Account deleted successfully",
+      data: deletedUser,
     });
   } catch (err) {
     next(err);
@@ -122,10 +109,7 @@ router.patch("/me/avatar", upload.single("avatar"), async (req, res, next) => {
   const userId = req.user.id;
 
   if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      error: "No avatar file provided",
-    });
+    throw createError(400, "No avatar file provided");
   }
 
   try {
@@ -142,10 +126,10 @@ router.patch("/me/avatar", upload.single("avatar"), async (req, res, next) => {
 
     const updatedUser = await userService.update(userId, updateData);
 
-    if (!updatedUser) {
-      return res.status(404).json({
-        success: false,
-        error: "No changes made to avatar",
+    if (updatedUser.noChanges) {
+      return res.status(200).json({
+        success: true,
+        message: "No changes made to avatar",
       });
     }
 
@@ -165,7 +149,7 @@ router.get("/me/avatar", async (req, res, next) => {
   try {
     const user = await userService.getById(userId);
 
-    if (!user || !user.avatar) {
+    if (!user.avatar) {
       return res.status(404).json({
         success: false,
         error: "Avatar not found",

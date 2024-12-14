@@ -1,3 +1,6 @@
+const createError = require("http-errors");
+const { isSameData } = require("../utils/checks");
+
 class TourService {
   constructor(db) {
     this.Tour = db.Tour;
@@ -38,9 +41,12 @@ class TourService {
 
   // Get tour by id
   async getById(id) {
-    return await this.Tour.findByPk(id, {
+    // Check if tour exists
+    const tour = await this.Tour.findByPk(id, {
       include: [{ model: this.Artist, attributes: ["id", "name"] }],
     });
+    if (!tour) throw createError(404, "Tour not found");
+    return tour;
   }
 
   // Create new tour
@@ -48,7 +54,7 @@ class TourService {
     // Check if artist exists
     const artist = await this.Artist.findByPk(data.artistId);
     if (!artist) {
-      throw new Error("Artist not found. Cannot create tour.");
+      throw createError(404, "Artist not found. Cannot create tour");
     }
     const newTour = await this.Tour.create({
       ...data,
@@ -67,16 +73,24 @@ class TourService {
 
   // Update tour
   async update(id, data) {
-    const rowsUpdated = await this.Tour.update(data, {
-      where: { id },
-    });
-    if (!rowsUpdated[0]) return null;
-    return await this.getById(id);
+    // Check if tour exists
+    const tour = await this.getById(id);
+
+    // Check if no changes are made
+    if (isSameData(tour, data)) {
+      return { noChanges: true, data: tour };
+    }
+
+    await tour.update(data);
+    return tour;
   }
 
   // Delete tour
   async delete(id) {
-    return await this.Tour.destroy({ where: { id } });
+    // Check if tour exists
+    const tour = await this.getById(id);
+    await tour.destroy();
+    return tour;
   }
 }
 
