@@ -16,14 +16,25 @@ function isSameData(instance, newData) {
   });
 }
 
+// Utility to check that show date is not outside of tour dates
 function checkDateRange(date, startDate, endDate) {
   const showDate = new Date(date);
   const rangeStart = new Date(startDate);
   const rangeEnd = new Date(endDate);
 
   if (showDate < rangeStart || showDate > rangeEnd) {
-    throw createError(400, `Show date (${date}) must be between ${startDate} and ${endDate}`);
+    throw createError(
+      400,
+      `Show date (${date}) must be between ${startDate} and ${endDate}`
+    );
   }
 }
 
-module.exports = { isSameData, checkDateRange };
+// Utility to compare start and end quantities
+function checkQuantities(start, end) {
+  if (end && end > start) {
+    throw createError(400, "End inventory cannot be more than start inventory");
+  }
+}
+
+module.exports = { isSameData, checkDateRange, checkQuantities };
