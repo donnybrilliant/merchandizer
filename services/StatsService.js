@@ -1,3 +1,4 @@
+const createError = require("http-errors");
 const {
   summarizeAdjustments,
   calculateAdjustments,
@@ -13,6 +14,10 @@ class StatsService {
 
   // Get statistics for a single show
   async getShowStats(showId) {
+    // Check if show exists
+    const show = await this.Show.findByPk(showId);
+    if (!show) throw createError(404, "Show not found");
+
     const inventories = await this.ShowInventory.findAll({
       where: { showId },
       include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
@@ -108,6 +113,10 @@ class StatsService {
 
   //Get statistics for all shows in a tour
   async getTourStats(tourId) {
+    // Check if tour exists
+    const tour = await this.Tour.findByPk(tourId);
+    if (!tour) throw createError(404, "Tour not found");
+
     const shows = await this.Show.findAll({ where: { tourId } });
 
     let grandTotalSold = 0;
@@ -128,6 +137,14 @@ class StatsService {
 
   // Get total sales for a specific product across all shows in a tour
   async getProductStatsForTour(productId, tourId) {
+    // Check if tour exists
+    const tour = await this.Tour.findByPk(tourId);
+    if (!tour) throw createError(404, "Tour not found");
+
+    // Check if product exists
+    const product = await this.Product.findByPk(productId);
+    if (!product) throw createError(404, "Product not found");
+
     const shows = await this.Show.findAll({ where: { tourId } });
     let totalSold = 0;
     let totalRevenue = 0;
