@@ -89,6 +89,34 @@ class ShowService {
     return await this.Show.create({ ...data, tourId });
   }
 
+  // Create multiple shows
+  async createMany(tourId, showsData) {
+    // Check if tour exists once
+    const tour = await this.Tour.findByPk(tourId);
+    if (!tour) throw createError(404, "Tour not found. Cannot create shows.");
+
+    // Validate and prepare shows data
+    const newShows = [];
+    for (const data of showsData) {
+      // Validate the show date
+      checkDateRange(data.date, tour.startDate, tour.endDate);
+
+      // Check if artist exists
+      const artist = await this.Artist.findByPk(data.artistId);
+      if (!artist) {
+        throw createError(
+          404,
+          `Artist not found for show with date ${data.date}. Cannot create show.`
+        );
+      }
+
+      newShows.push({ ...data, tourId });
+    }
+
+    // Bulk create all valid shows
+    return await this.Show.bulkCreate(newShows);
+  }
+
   // Update show
   async update(id, data) {
     const show = await this.getById(id);
