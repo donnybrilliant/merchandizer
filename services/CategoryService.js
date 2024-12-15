@@ -7,9 +7,29 @@ class CategoryService {
     this.Category = db.Category;
   }
 
-  // Get all categories
-  async getAll() {
-    return await this.Category.findAll();
+  // Find all categories or search by name
+  async getAllByQuery(query = {}) {
+    const whereConditions = {};
+
+    // Apply search filter
+    if (query.name) {
+      whereConditions.name = { [Op.like]: `%${query.name}%` };
+    }
+
+    const categories = await this.Category.findAll({
+      where: whereConditions,
+    });
+
+    if (!categories.length) {
+      throw createError(
+        404,
+        query.name
+          ? `No categories found matching: ${query.name}`
+          : "No categories exist"
+      );
+    }
+
+    return categories;
   }
 
   // Get category by id
@@ -24,7 +44,7 @@ class CategoryService {
   async checkName(name) {
     const existingCategory = await this.Category.findOne({ where: { name } });
     if (existingCategory) {
-      throw createError(409, `Category with the name ${name} already exists`);
+      throw createError(409, `Category ${name} already exists`);
     }
   }
 

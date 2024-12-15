@@ -7,36 +7,29 @@ class ArtistService {
     this.Artist = db.Artist;
   }
 
-  // Get all artists
-  async getAll() {
-    return await this.Artist.findAll();
-  }
+  // Find all artists or search by query
+  async getAllByQuery(query = {}) {
+    const whereConditions = {};
 
-  // Get artist by id
-  async getById(id) {
-    // Check it the artist exists
-    const artist = await this.Artist.findByPk(id);
-    if (!artist) throw createError(400, "Artist not found");
-    return artist;
-  }
-
-  // Check if artist name already exists
-  async checkName(name) {
-    const existingArtist = await this.Artist.findOne({ where: { name } });
-    if (existingArtist) {
-      throw createError(409, `Artist with the name ${name} already exists`);
+    // Apply search filter
+    if (query.name) {
+      whereConditions.name = { [Op.like]: `%${query.name}%` };
     }
-  }
 
-  // Search artist by name
-  async search(name) {
-    return await this.Artist.findAll({
-      where: {
-        name: {
-          [Op.like]: `%${name}%`,
-        },
-      },
+    const artists = await this.Artist.findAll({
+      where: whereConditions,
     });
+
+    if (!artists.length) {
+      throw createError(
+        404,
+        query.length
+          ? `No artists found matching the query: ${query.name}`
+          : "No artists exist"
+      );
+    }
+
+    return artists;
   }
 
   // Create new artist

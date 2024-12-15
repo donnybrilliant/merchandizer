@@ -13,40 +13,11 @@ const {
 
 router.use(isAuth);
 
-// Get all products
+// Get all products or search by query
 router.get("/", async (req, res, next) => {
   try {
-    const products = await productService.getAll();
-    if (!products.length) {
-      return res.status(200).json({
-        success: true,
-        message: "No products exist",
-        data: products,
-      });
-    }
+    const products = await productService.getAllByQuery(req.query);
     return res.status(200).json({ success: true, data: products });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Search for products
-router.get("/search", async (req, res, next) => {
-  try {
-    const products = await productService.search(req.query);
-
-    if (!products.length) {
-      return res.status(200).json({
-        success: true,
-        data: products,
-        message: "No products found matching the query",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: products,
-    });
   } catch (err) {
     next(err);
   }
