@@ -3,8 +3,8 @@ const router = express.Router();
 const db = require("../models");
 const UserService = require("../services/UserService");
 const userService = new UserService(db);
-const multer = require("multer");
-const sharp = require("sharp");
+const createError = require("http-errors");
+const { multerUpload, uploadToS3, resizeImage } = require("../utils/upload");
 const { isAuth, adminOnly } = require("../middleware/auth");
 const { validateUserUpdate } = require("../middleware/validation");
 
@@ -31,10 +31,7 @@ router.get("/me", async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      data: {
-        ...user.toJSON(),
-        avatar: user.avatar ? "/users/me/avatar" : null,
-      },
+      data: user,
     });
   } catch (err) {
     next(err);
@@ -53,7 +50,6 @@ router.put("/me", validateUserUpdate, async (req, res, next) => {
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone;
 
-    // Update user in the database
     const updatedUser = await userService.update(userId, updateData);
 
     if (updatedUser.noChanges) {
@@ -93,74 +89,46 @@ router.delete("/me", async (req, res, next) => {
   }
 });
 
-// Multer setup for avatar uploads
-const upload = multer({
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-      return cb(new Error("Only image files are allowed"));
-    }
-    cb(null, true);
-  },
-});
-
 // Update user avatar
-router.patch("/me/avatar", upload.single("avatar"), async (req, res, next) => {
-  const userId = req.user.id;
+router.put(
+  "/me/avatar",
+  multerUpload.single("avatar"),
+  async (req, res, next) => {
+    const userId = req.user.id;
 
-  if (!req.file) {
-    throw createError(400, "No avatar file provided");
-  }
+    if (!req.file) {
+      throw createError(400, "No avatar file provided");
+    }
 
-  try {
-    // Resize and convert the image to PNG
-    const resizedBuffer = await sharp(req.file.buffer)
-      .resize(300, 300)
-      .png()
-      .toBuffer();
+    try {
+      // Resize and convert image to PNG
+      const resizedBuffer = await resizeImage(req.file.buffer, 400, 400);
 
-    // Update user's avatar and MIME type
-    const updateData = {
-      avatar: resizedBuffer,
-    };
+      // Create/update avatar in S3
+      const key = `users/${userId}-avatar.png`;
+      const imageUrl = await uploadToS3(key, resizedBuffer, "image/png");
 
-    const updatedUser = await userService.update(userId, updateData);
+      const updatedUser = await userService.update(userId, {
+        avatar: imageUrl,
+      });
 
-    if (updatedUser.noChanges) {
+      if (updatedUser.noChanges) {
+        return res.status(200).json({
+          success: true,
+          message: "No changes made to avatar",
+          data: updatedUser.data,
+        });
+      }
+
       return res.status(200).json({
         success: true,
-        message: "No changes made to avatar",
+        message: "Avatar updated successfully",
+        data: updatedUser,
       });
+    } catch (err) {
+      next(err);
     }
-
-    return res.status(200).json({
-      success: true,
-      message: "Avatar updated successfully",
-    });
-  } catch (err) {
-    next(err);
   }
-});
-
-// Get avatar
-router.get("/me/avatar", async (req, res, next) => {
-  const userId = req.user.id;
-
-  try {
-    const user = await userService.getById(userId);
-
-    if (!user.avatar) {
-      return res.status(404).json({
-        success: false,
-        error: "Avatar not found",
-      });
-    }
-
-    res.set("Content-Type", "image/png");
-    return res.send(user.avatar);
-  } catch (err) {
-    next(err);
-  }
-});
+);
 
 module.exports = router;
