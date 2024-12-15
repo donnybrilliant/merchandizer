@@ -1,4 +1,4 @@
-const { check, body, validationResult } = require("express-validator");
+const { check, body, query, validationResult } = require("express-validator");
 const createError = require("http-errors");
 
 // Middleware to handle validation errors
@@ -24,6 +24,25 @@ const validateNonEmptyBody = () => {
     return true;
   });
 };
+
+// Validate query parameters for searching
+const validateQueryParams = (allowedParams) => [
+  query().custom((_, { req }) => {
+    const disallowedKeys = Object.keys(req.query).filter(
+      (key) => !allowedParams.includes(key)
+    );
+
+    if (disallowedKeys.length > 0) {
+      throw new Error(
+        `Invalid query parameter: ${disallowedKeys.join(
+          ", "
+        )}. Allowed parameters are: ${allowedParams.join(", ")}`
+      );
+    }
+
+    return true;
+  }),
+];
 
 // Login validation
 const validateLogin = [
@@ -488,6 +507,66 @@ const validateAdjustmentUpdate = [
   handleValidationErrors,
 ];
 
+// Search Shows Validation
+const validateShowSearch = [
+  ...validateQueryParams(["city", "venue", "date", "country", "artist"]),
+  check("city").optional().isString().withMessage("City must be a string"),
+  check("venue").optional().isString().withMessage("Venue must be a string"),
+  check("date")
+    .optional()
+    .isISO8601()
+    .withMessage("Date must be a valid ISO8601 date (YYYY-MM-DD)"),
+  check("country")
+    .optional()
+    .isString()
+    .withMessage("Country must be a string"),
+  check("artist").optional().isString().withMessage("Artist must be a string"),
+  handleValidationErrors,
+];
+
+// Search Products Validation
+const validateProductSearch = [
+  ...validateQueryParams([
+    "name",
+    "category",
+    "artist",
+    "color",
+    "size",
+    "minPrice",
+    "maxPrice",
+  ]),
+  check("name").optional().isString().withMessage("Name must be a string"),
+  check("category")
+    .optional()
+    .isString()
+    .withMessage("Category must be a string"),
+  check("artist").optional().isString().withMessage("Artist must be a string"),
+  check("color").optional().isString().withMessage("Color must be a string"),
+  check("minPrice")
+    .optional()
+    .isDecimal()
+    .withMessage("Min price must be a decimal number"),
+  check("maxPrice")
+    .optional()
+    .isDecimal()
+    .withMessage("Max price must be a decimal number"),
+  handleValidationErrors,
+];
+
+// Search Categories Validation
+const validateCategorySearch = [
+  ...validateQueryParams(["name"]),
+  check("name").optional().isString().withMessage("Name must be a string"),
+  handleValidationErrors,
+];
+
+// Search Artists Validation
+const validateArtistSearch = [
+  ...validateQueryParams(["name"]),
+  check("name").optional().isString().withMessage("Name must be a string"),
+  handleValidationErrors,
+];
+
 module.exports = {
   validateLogin,
   validateRegister,
@@ -508,4 +587,8 @@ module.exports = {
   validateMultipleInventoryUpdate,
   validateAdjustment,
   validateAdjustmentUpdate,
+  validateCategorySearch,
+  validateArtistSearch,
+  validateProductSearch,
+  validateShowSearch,
 };
