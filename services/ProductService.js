@@ -7,88 +7,63 @@ class ProductService {
     this.Product = db.Product;
     this.Category = db.Category;
     this.Artist = db.Artist;
+
+    // Default includes
+    this.defaultInclude = [
+      {
+        model: this.Category,
+        attributes: ["name"],
+      },
+      {
+        model: this.Artist,
+        attributes: ["name"],
+      },
+    ];
   }
 
-  // Get all products
-  async getAll() {
-    return await this.Product.findAll({
-      include: [
-        {
-          model: this.Category,
-          attributes: ["id", "name"],
-        },
-        {
-          model: this.Artist,
-          attributes: ["name"],
-        },
-      ],
-    });
-  }
-
-  // Get product by id
-  async getById(id) {
-    const product = await this.Product.findByPk(id, {
-      include: [
-        {
-          model: this.Category,
-          attributes: ["id", "name"],
-        },
-        {
-          model: this.Artist,
-          attributes: ["name"],
-        },
-      ],
-    });
-    if (!product) throw createError(404, "Product not found");
-    return product;
-  }
-
-  // Search & filter products
-  async search(query) {
+  // Find all products or search with query
+  async getAllByQuery(query = {}) {
     const whereConditions = {};
-    const includeConditions = [];
 
-    // Dynamic query
-    const productFields = ["name", "description", "color", "size"];
-    productFields.forEach((field) => {
+    // Apply filters dynamically
+    ["name", "description", "color", "size"].forEach((field) => {
       if (query[field]) {
         whereConditions[field] = { [Op.like]: `%${query[field]}%` };
       }
     });
 
-    // Filter by price range
     if (query.minPrice || query.maxPrice) {
       whereConditions.price = {};
-      if (query.minPrice) {
+      if (query.minPrice)
         whereConditions.price[Op.gte] = parseFloat(query.minPrice);
-      }
-      if (query.maxPrice) {
+      if (query.maxPrice)
         whereConditions.price[Op.lte] = parseFloat(query.maxPrice);
-      }
     }
 
-    // Include Category filtering
-    if (query.category) {
-      includeConditions.push({
-        model: this.Category,
-        attributes: ["id", "name"],
-        where: { name: { [Op.like]: `%${query.category}%` } },
-      });
-    }
-
-    // Include Artist filtering
-    if (query.artist) {
-      includeConditions.push({
-        model: this.Artist,
-        attributes: ["id", "name"],
-        where: { name: { [Op.like]: `%${query.artist}%` } },
-      });
-    }
-
-    return await this.Product.findAll({
+    const products = await this.Product.findAll({
       where: whereConditions,
-      include: includeConditions,
+      include: this.defaultInclude,
     });
+
+    if (!products.length) {
+      throw createError(
+        404,
+        query.length
+          ? "No products found matching the query"
+          : "No products exist"
+      );
+    }
+
+    return products;
+  }
+
+  // Get product by id
+  async getById(id) {
+    const product = await this.Product.findByPk(id, {
+      include: this.defaultInclude,
+    });
+    if (!product) throw createError(404, "Product not found");
+    return product;
   }
 
   // Create product

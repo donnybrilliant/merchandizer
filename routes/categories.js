@@ -8,38 +8,11 @@ const { validateCategory } = require("../middleware/validation");
 
 router.use(isAuth);
 
-// Get all categories
+// Get all categories or search by name
 router.get("/", async (req, res, next) => {
   try {
-    const categories = await categoryService.getAll();
-    if (!categories.length) {
-      return res.status(200).json({
-        success: true,
-        message: "No categories exist",
-        data: categories,
-      });
-    }
+    const categories = await categoryService.getAllByQuery(req.query);
     return res.status(200).json({ success: true, data: categories });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Search categories by name
-router.get("/search", validateCategory, async (req, res, next) => {
-  try {
-    const { name } = req.query;
-    const result = await categoryService.search(name);
-
-    if (!result.length) {
-      return res.status(200).json({
-        success: true,
-        error: "No categories found matching the name",
-        data: result,
-      });
-    }
-
-    return res.status(200).json({ success: true, data: result });
   } catch (err) {
     next(err);
   }
