@@ -21,6 +21,13 @@ class ArtistService {
     });
   }
 
+  // Get artist by id
+  async getById(id) {
+    const artist = await this.Artist.findByPk(id);
+    if (!artist) throw createError(404, "Artist not found");
+    return artist;
+  }
+
   // Check if artist name already exists
   async checkName(name) {
     const existingArtist = await this.Artist.findOne({ where: { name } });

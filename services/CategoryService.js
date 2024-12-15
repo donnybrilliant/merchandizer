@@ -23,7 +23,6 @@ class CategoryService {
 
   // Get category by id
   async getById(id) {
-    // Check if category exists
     const category = await this.Category.findByPk(id);
     if (!category) throw createError(404, "Category not found");
     return category;
