@@ -40,21 +40,18 @@ class ProductService {
         whereConditions.price[Op.lte] = parseFloat(query.maxPrice);
     }
 
-    const products = await this.Product.findAll({
+    if (query.category) {
+      whereConditions["$Category.name$"] = { [Op.like]: `%${query.category}%` };
+    }
+
+    if (query.artist) {
+      whereConditions["$Artist.name$"] = { [Op.like]: `%${query.artist}%` };
+    }
+
+    return await this.Product.findAll({
       where: whereConditions,
       include: this.defaultInclude,
     });
-
-    if (!products.length) {
-      throw createError(
-        404,
-        query.length
-          ? "No products found matching the query"
-          : "No products exist"
-      );
-    }
-
-    return products;
   }
 
   // Get product by id

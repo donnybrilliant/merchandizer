@@ -39,19 +39,10 @@ class ShowService {
       }
     });
 
-    const shows = await this.Show.findAll({
+    return await this.Show.findAll({
       where: whereConditions,
       include: this.defaultInclude,
     });
-
-    if (!shows.length) {
-      throw createError(
-        404,
-        query.length ? "No shows found matching the query" : "No shows exist"
-      );
-    }
-
-    return shows;
   }
 
   // Get show by id

@@ -17,6 +17,15 @@ router.get("/", authorize("viewShows"), async (req, res, next) => {
   try {
     const { tourId } = req.params;
     const shows = await showService.getAllByTour(tourId, req.query);
+    if (!shows.length) {
+      return res.status(200).json({
+        success: true,
+        message: Object.keys(req.query).length
+          ? "No shows found matching the query"
+          : "No shows exist",
+        data: shows,
+      });
+    }
     return res.status(200).json({ success: true, data: shows });
   } catch (err) {
     next(err);
