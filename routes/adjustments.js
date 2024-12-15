@@ -8,6 +8,9 @@ const {
   validateAdjustment,
   validateAdjustmentUpdate,
 } = require("../middleware/validation");
+const { checkShowExists } = require("../middleware/resourceValidation");
+
+router.use(checkShowExists);
 
 // Get all adjustments for a show
 router.get("/", authorize("viewAdjustments"), async (req, res, next) => {
