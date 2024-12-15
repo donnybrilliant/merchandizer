@@ -75,6 +75,7 @@ router.post(
       const show = await showService.create(tourId, req.body);
       return res.status(201).json({
         success: true,
+        message: "Show created successfully",
         data: show,
       });
     } catch (err) {
@@ -92,9 +93,9 @@ router.post(
     try {
       const { tourId } = req.params;
       const shows = await showService.createMany(tourId, req.body);
-
       return res.status(201).json({
         success: true,
+        message: "Shows created successfully",
         data: shows,
       });
     } catch (err) {
@@ -121,6 +122,7 @@ router.put(
       }
       return res.status(200).json({
         success: true,
+        message: "Show updated successfully",
         data: updatedShow,
       });
     } catch (err) {

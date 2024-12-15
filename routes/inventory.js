@@ -46,7 +46,6 @@ router.get(
     try {
       const { showId, productId } = req.params;
       const inventory = await inventoryService.getById(showId, productId);
-
       return res.status(200).json({ success: true, data: inventory });
     } catch (err) {
       next(err);
@@ -62,10 +61,12 @@ router.post(
   async (req, res, next) => {
     try {
       const { showId } = req.params;
-
       const inventories = await inventoryService.createMany(showId, req.body);
-
-      return res.status(201).json({ success: true, data: inventories });
+      return res.status(201).json({
+        success: true,
+        message: "Inventory created successfully",
+        data: inventories,
+      });
     } catch (err) {
       next(err);
     }
@@ -107,14 +108,16 @@ router.post(
   async (req, res, next) => {
     try {
       const { showId, productId } = req.params;
-
       const newInventory = await inventoryService.create(
         showId,
         productId,
         req.body
       );
-
-      return res.status(201).json({ success: true, data: newInventory });
+      return res.status(201).json({
+        success: true,
+        message: "Inventory created successfully",
+        data: newInventory,
+      });
     } catch (err) {
       next(err);
     }
@@ -129,12 +132,10 @@ router.put(
   async (req, res, next) => {
     try {
       const { showId } = req.params;
-
       const { updated, unchanged } = await inventoryService.updateMany(
         showId,
         req.body
       );
-
       return res.status(200).json({
         success: true,
         message: "Inventory update processed",
@@ -158,13 +159,11 @@ router.put(
   async (req, res, next) => {
     try {
       const { showId, productId } = req.params;
-
       const updatedInventory = await inventoryService.update(
         showId,
         productId,
         req.body
       );
-
       if (updatedInventory.noChanges) {
         return res.status(200).json({
           success: true,
@@ -172,8 +171,11 @@ router.put(
           data: updatedInventory.data,
         });
       }
-
-      return res.status(200).json({ success: true, data: updatedInventory });
+      return res.status(200).json({
+        success: true,
+        message: "Inventory updated successfully",
+        data: updatedInventory,
+      });
     } catch (err) {
       next(err);
     }
@@ -188,12 +190,10 @@ router.delete(
   async (req, res, next) => {
     try {
       const { showId, productId } = req.params;
-
       const inventory = await inventoryService.delete(showId, productId);
-
       return res.status(200).json({
         success: true,
-        message: "Inventory item deleted successfully",
+        message: "Inventory deleted successfully",
         data: inventory,
       });
     } catch (err) {
