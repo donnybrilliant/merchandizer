@@ -170,6 +170,46 @@ const validateShow = [
   handleValidationErrors,
 ];
 
+const validateMultipleShows = [
+  body().isArray().withMessage("Request body must be a an array of shows"),
+  validateNonEmptyBody(),
+  body("*.date")
+    .notEmpty()
+    .withMessage("Date is required")
+    .isISO8601()
+    .withMessage("Date must be a valid date (YYYY-MM-DD)"),
+  body("*.venue").notEmpty().withMessage("Venue is required"),
+  body("*.city").notEmpty().withMessage("City is required"),
+  body("*.country").notEmpty().withMessage("Country is required"),
+  body("*.artistId")
+    .notEmpty()
+    .withMessage("Artist ID is required")
+    .isInt()
+    .withMessage("Artist ID must be an integer"),
+  check("tourId")
+    .notEmpty()
+    .withMessage("Tour ID is required")
+    .isInt()
+    .withMessage("Tour ID must be an integer"),
+  check("getInTime")
+    .optional()
+    .matches(timeRegex)
+    .withMessage("getInTime must be a valid time in HH:mm format"),
+  check("loadOutTime")
+    .optional()
+    .matches(timeRegex)
+    .withMessage("loadOutTime must be a valid time in HH:mm format"),
+  check("doorsTime")
+    .optional()
+    .matches(timeRegex)
+    .withMessage("doorsTime must be a valid time in HH:mm format"),
+  check("onStageTime")
+    .optional()
+    .matches(timeRegex)
+    .withMessage("onStageTime must be a valid time in HH:mm format"),
+  handleValidationErrors,
+];
+
 // Update show validation
 const validateShowUpdate = [
   validateNonEmptyBody(),
@@ -457,6 +497,7 @@ module.exports = {
   validateTour,
   validateTourUpdate,
   validateShow,
+  validateMultipleShows,
   validateShowUpdate,
   validateCategory,
   validateProduct,
