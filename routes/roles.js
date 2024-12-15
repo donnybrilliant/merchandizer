@@ -13,8 +13,12 @@ router.post("/", authorize("manageUsers"), async (req, res, next) => {
     const { tourId } = req.params;
     const { userId, role } = req.body;
 
-    const result = await roleService.addUserToTour(tourId, userId, role);
-    return res.status(201).json({ success: true, data: result });
+    const user = await roleService.addUserToTour(tourId, userId, role);
+    return res.status(201).json({
+      success: true,
+      message: "User added to tour successfully",
+      data: user,
+    });
   } catch (error) {
     next(error);
   }
@@ -25,14 +29,13 @@ router.get("/", authorize("manageUsers"), async (req, res, next) => {
   try {
     const { tourId } = req.params;
     const users = await roleService.getUsersForTour(tourId);
-
     if (!users.length) {
       return res.status(200).json({
         success: true,
         message: "No users found for this tour",
+        data: users,
       });
     }
-
     return res.status(200).json({ success: true, data: users });
   } catch (error) {
     next(error);
@@ -44,7 +47,6 @@ router.put("/:userId", authorize("manageUsers"), async (req, res, next) => {
   try {
     const { tourId, userId } = req.params;
     const { role } = req.body;
-
     const updatedRole = await roleService.updateUserRole(tourId, userId, role);
     if (updatedRole.noChanges) {
       return res.status(200).json({
@@ -56,7 +58,7 @@ router.put("/:userId", authorize("manageUsers"), async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "User role updated successfully",
-      data: updatedRole.data,
+      data: updatedRole,
     });
   } catch (error) {
     next(error);
@@ -72,7 +74,7 @@ router.delete("/:userId", authorize("manageUsers"), async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "User removed from the tour",
-      data: deletedRole.data,
+      data: deletedRole,
     });
   } catch (error) {
     next(error);

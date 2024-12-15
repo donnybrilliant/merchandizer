@@ -45,7 +45,11 @@ router.get("/:categoryId", async (req, res, next) => {
 router.post("/", validateCategory, async (req, res, next) => {
   try {
     const category = await categoryService.create(req.body);
-    return res.status(201).json({ success: true, data: category });
+    return res.status(201).json({
+      success: true,
+      message: "Category created successfully",
+      data: category,
+    });
   } catch (err) {
     next(err);
   }
@@ -65,7 +69,7 @@ router.put("/:categoryId", validateCategory, async (req, res, next) => {
     }
     return res.status(200).json({
       success: true,
-      message: "Category updated",
+      message: "Category updated successfully",
       data: updatedCategory,
     });
   } catch (err) {

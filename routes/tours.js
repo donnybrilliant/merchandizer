@@ -62,7 +62,11 @@ router.get("/:tourId", authorize("viewTour"), async (req, res, next) => {
 router.post("/", validateTour, async (req, res, next) => {
   try {
     const tour = await tourService.create(req.body, req.user.id);
-    return res.status(201).json({ success: true, data: tour });
+    return res.status(201).json({
+      success: true,
+      message: "Tour created successfully",
+      data: tour,
+    });
   } catch (err) {
     next(err);
   }
@@ -84,7 +88,11 @@ router.put(
           data: updatedTour.data,
         });
       }
-      return res.status(200).json({ success: true, data: updatedTour });
+      return res.status(200).json({
+        success: true,
+        message: "Tour updated successfully",
+        data: updatedTour,
+      });
     } catch (err) {
       next(err);
     }
