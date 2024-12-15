@@ -4,14 +4,26 @@ const db = require("../models");
 const CategoryService = require("../services/CategoryService");
 const categoryService = new CategoryService(db);
 const { isAuth } = require("../middleware/auth");
-const { validateCategory } = require("../middleware/validation");
+const {
+  validateCategory,
+  validateCategorySearch,
+} = require("../middleware/validation");
 
 router.use(isAuth);
 
 // Get all categories or search by name
-router.get("/", async (req, res, next) => {
+router.get("/", validateCategorySearch, async (req, res, next) => {
   try {
     const categories = await categoryService.getAllByQuery(req.query);
+    if (!categories.length) {
+      return res.status(200).json({
+        success: true,
+        message: Object.keys(req.query).length
+          ? `No categories found matching the name: ${req.query.name}`
+          : "No categories exist",
+        data: categories,
+      });
+    }
     return res.status(200).json({ success: true, data: categories });
   } catch (err) {
     next(err);

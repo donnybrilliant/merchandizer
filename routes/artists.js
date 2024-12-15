@@ -4,14 +4,26 @@ const db = require("../models");
 const ArtistService = require("../services/ArtistService");
 const artistService = new ArtistService(db);
 const { isAuth } = require("../middleware/auth");
-const { validateArtist } = require("../middleware/validation");
+const {
+  validateArtist,
+  validateArtistSearch,
+} = require("../middleware/validation");
 
 router.use(isAuth);
 
 // Get all artists
-router.get("/", async (req, res, next) => {
+router.get("/", validateArtistSearch, async (req, res, next) => {
   try {
     const artists = await artistService.getAllByQuery(req.query);
+    if (!artists.length) {
+      return res.status(200).json({
+        success: true,
+        message: Object.keys(req.query).length
+          ? `No artists found matching the name: ${req.query.name}`
+          : "No artists exist",
+        data: artists,
+      });
+    }
     return res.status(200).json({ success: true, data: artists });
   } catch (err) {
     next(err);

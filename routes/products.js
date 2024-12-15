@@ -9,14 +9,24 @@ const { isAuth } = require("../middleware/auth");
 const {
   validateProduct,
   validateProductUpdate,
+  validateProductSearch,
 } = require("../middleware/validation");
 
 router.use(isAuth);
 
 // Get all products or search by query
-router.get("/", async (req, res, next) => {
+router.get("/", validateProductSearch, async (req, res, next) => {
   try {
     const products = await productService.getAllByQuery(req.query);
+    if (!products.length) {
+      return res.status(200).json({
+        success: true,
+        message: Object.keys(req.query).length
+          ? "No products found matching the query"
+          : "No products exist",
+        data: products,
+      });
+    }
     return res.status(200).json({ success: true, data: products });
   } catch (err) {
     next(err);
