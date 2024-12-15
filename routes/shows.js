@@ -8,6 +8,7 @@ const adjustmentRouter = require("./adjustments");
 const { adminOnly, authorize } = require("../middleware/auth");
 const {
   validateShow,
+  validateMultipleShows,
   validateShowUpdate,
 } = require("../middleware/validation");
 
@@ -88,6 +89,26 @@ router.post(
       return res.status(201).json({
         success: true,
         data: show,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Create multiple shows
+router.post(
+  "/bulk",
+  authorize("manageShows"),
+  validateMultipleShows,
+  async (req, res, next) => {
+    try {
+      const { tourId } = req.params;
+      const shows = await showService.createMany(tourId, req.body);
+
+      return res.status(201).json({
+        success: true,
+        data: shows,
       });
     } catch (err) {
       next(err);
