@@ -11,36 +11,8 @@ router.use(isAuth);
 // Get all artists
 router.get("/", async (req, res, next) => {
   try {
-    const artists = await artistService.getAll();
-    if (!artists.length) {
-      return res
-        .status(200)
-        .json({ success: true, message: "No artists exist", data: artists });
-    }
+    const artists = await artistService.getAllByQuery(req.query);
     return res.status(200).json({ success: true, data: artists });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Search for artists
-router.get("/search", validateArtist, async (req, res, next) => {
-  try {
-    const { name } = req.query;
-    const result = await artistService.search(name);
-
-    if (!result.length) {
-      return res.status(200).json({
-        success: true,
-        error: "No artists found matching the name",
-        data: result,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
   } catch (err) {
     next(err);
   }

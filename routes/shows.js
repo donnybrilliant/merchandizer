@@ -12,20 +12,12 @@ const {
   validateShowUpdate,
 } = require("../middleware/validation");
 
-// Get all shows
+// Get all shows or search shows
 router.get("/", authorize("viewShows"), async (req, res, next) => {
   try {
     const { tourId } = req.params;
-    const shows = await showService.getAllByTour(tourId);
-    if (!shows.length) {
-      return res
-        .status(200)
-        .json({ success: true, message: "No shows exist", data: shows });
-    }
-    return res.status(200).json({
-      success: true,
-      data: shows,
-    });
+    const shows = await showService.getAllByTour(tourId, req.query);
+    return res.status(200).json({ success: true, data: shows });
   } catch (err) {
     next(err);
   }
@@ -44,23 +36,6 @@ router.get("/all", adminOnly, async (req, res, next) => {
       success: true,
       data: shows,
     });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Search for shows
-router.get("/search", authorize("viewShows"), async (req, res, next) => {
-  try {
-    const shows = await showService.search(req.query);
-    if (!shows.length) {
-      return res.status(200).json({
-        success: true,
-        message: "No shows found matching the query",
-        data: shows,
-      });
-    }
-    return res.status(200).json({ success: true, data: shows });
   } catch (err) {
     next(err);
   }
