@@ -25,6 +25,17 @@ const validateNonEmptyBody = () => {
   });
 };
 
+// Validate image upload
+const validateImageUpload = (fieldName) => [
+  check(fieldName).custom((value, { req }) => {
+    if (!req.file) {
+      throw new Error(`No ${fieldName} file provided`);
+    }
+    return true;
+  }),
+  handleValidationErrors,
+];
+
 // Validate query parameters for searching
 const validateQueryParams = (allowedParams) => [
   query().custom((_, { req }) => {
@@ -591,4 +602,5 @@ module.exports = {
   validateArtistSearch,
   validateProductSearch,
   validateShowSearch,
+  validateImageUpload,
 };

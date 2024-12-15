@@ -3,13 +3,13 @@ const router = express.Router();
 const db = require("../models");
 const ProductService = require("../services/ProductService");
 const productService = new ProductService(db);
-const createError = require("http-errors");
 const { multerUpload, uploadToS3, resizeImage } = require("../utils/upload");
 const { isAuth } = require("../middleware/auth");
 const {
   validateProduct,
   validateProductUpdate,
   validateProductSearch,
+  validateImageUpload,
 } = require("../middleware/validation");
 
 router.use(isAuth);
@@ -48,7 +48,11 @@ router.get("/:productId", async (req, res, next) => {
 router.post("/", validateProduct, async (req, res, next) => {
   try {
     const product = await productService.create(req.body);
-    return res.status(201).json({ success: true, data: product });
+    return res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      data: product,
+    });
   } catch (err) {
     next(err);
   }
@@ -66,7 +70,11 @@ router.put("/:productId", validateProductUpdate, async (req, res, next) => {
         data: updatedProduct.data,
       });
     }
-    return res.status(200).json({ success: true, data: updatedProduct });
+    return res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+      data: updatedProduct,
+    });
   } catch (err) {
     next(err);
   }
@@ -91,11 +99,8 @@ router.delete("/:productId", async (req, res, next) => {
 router.put(
   "/:productId/image",
   multerUpload.single("image"),
+  validateImageUpload("image"),
   async (req, res, next) => {
-    if (!req.file) {
-      throw createError(400, "No product image provided");
-    }
-
     try {
       const { productId } = req.params;
       // Resize and convert the image to PNG
