@@ -89,7 +89,7 @@ router.post("/register", validateRegister, async (req, res, next) => {
 });
 
 // Change password route
-router.patch(
+router.put(
   "/users/me/password",
   isAuth,
   validateNewPassword,
