@@ -12,10 +12,6 @@ class InventoryService {
 
   // Check if inventory exists
   async checkInventoryExists(showId, productId) {
-    // Check if show exists
-    const show = await this.Show.findByPk(showId);
-    if (!show) throw createError(404, "Show not found");
-
     // Check if product exists
     const product = await this.Product.findByPk(productId);
     if (!product) throw createError(404, "Product not found");
@@ -31,10 +27,6 @@ class InventoryService {
 
   // Get existing product ids from show
   async getExistingProductIds(showId) {
-    // Check if show exists
-    const show = await this.Show.findByPk(showId);
-    if (!show) throw createError(404, "Show not found");
-
     const existingInventories = await this.ShowInventory.findAll({
       where: { showId },
       attributes: ["productId"],
@@ -45,10 +37,6 @@ class InventoryService {
 
   // Get all inventory items for a specific show
   async getAllByShow(showId) {
-    // Check if show exists
-    const show = await this.Show.findByPk(showId);
-    if (!show) throw createError(404, "Show not found");
-
     return await this.ShowInventory.findAll({
       where: { showId },
       include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
@@ -57,14 +45,6 @@ class InventoryService {
 
   // Get inventory item by show and product ID - correct name?
   async getById(showId, productId) {
-    // Check if product exists
-    const product = await this.Product.findByPk(productId);
-    if (!product) throw createError(404, "Product not found");
-
-    // Check if show exists
-    const show = await this.Show.findByPk(showId);
-    if (!show) throw createError(404, "Show not found");
-
     const inventory = await this.ShowInventory.findOne({
       where: { showId, productId },
       include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
@@ -89,10 +69,10 @@ class InventoryService {
   }
 
   // Create multiple inventory items for a show
-  async createMany(showId, inventoryItems) {
+  async createMany(showId, data) {
     const newInventories = [];
 
-    for (const item of inventoryItems) {
+    for (const item of data) {
       const { productId, startInventory, endInventory } = item;
 
       // Validate inventory quantities

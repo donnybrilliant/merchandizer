@@ -12,10 +12,6 @@ class AdjustmentService {
 
   // Get ShowInventory for a product in a show
   async getShowInventory(showId, productId) {
-    // Check if show exists
-    const show = await this.Show.findByPk(showId);
-    if (!show) throw createError(404, "Show not found");
-
     // Check if product exists
     const product = await this.Product.findByPk(productId);
     if (!product) throw createError(404, "Product not found");
@@ -36,10 +32,6 @@ class AdjustmentService {
 
   // Get all adjustments for a show
   async getAllByShow(showId) {
-    // Check if tour exists
-    const show = await this.Show.findByPk(showId);
-    if (!show) throw createError(404, "Show not found");
-
     return await this.Adjustment.findAll({
       include: [
         {

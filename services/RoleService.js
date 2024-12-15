@@ -16,42 +16,30 @@ class RoleService {
   async addUserToTour(tourId, userId, role) {
     // Check if the user to be added exists
     const user = await this.User.findByPk(userId);
-    if (!user) throw new Error("User not found");
-
-    // Check if the tour exists
-    const tour = await this.Tour.findByPk(tourId);
-    if (!tour) throw new Error("Tour not found");
+    if (!user) throw createError(404, "User not found");
 
     // Validate the role
     const validRoles = ["manager", "sales", "viewer"];
     if (!validRoles.includes(role)) {
-      throw new Error("Invalid role");
+      throw createError(400, "Invalid role");
     }
 
     // Check if the user is already assigned a role for this tour
     const existing = await this.UserRoleTour.findOne({
       where: { userId, tourId },
     });
-    if (existing) throw new Error("User already assigned to this tour");
+    if (existing) throw createError(400, "User already assigned to this tour");
 
     // Create the user-tour association
-    await this.UserRoleTour.create({
+    return await this.UserRoleTour.create({
       userId,
       tourId,
       role,
     });
-
-    return { success: true, message: "User added to tour successfully" };
   }
 
   // Get users associated with tour
   async getUsersForTour(tourId) {
-    // Verify that the tour exists - this might not be neccesary as it is stopped by middleware
-    const tour = await this.Tour.findByPk(tourId);
-    if (!tour) {
-      throw new Error("Tour not found");
-    }
-
     // Fetch users and their roles for the specified tour
     const userRoles = await this.UserRoleTour.findAll({
       where: { tourId },
@@ -59,7 +47,7 @@ class RoleService {
       include: [
         {
           model: this.User,
-          attributes: ["id", "firstName", "lastName", "email"], // Include user fields
+          attributes: ["id", "firstName", "lastName", "email"],
         },
       ],
     });
@@ -80,18 +68,21 @@ class RoleService {
     // Validate the new role
     const validRoles = ["manager", "sales", "viewer"];
     if (!validRoles.includes(newRole)) {
-      throw new Error("Invalid role");
+      throw createError(400, "Invalid role");
     }
 
+    // Check if the user to be added exists
+    const user = await this.User.findByPk(userId);
+    if (!user) throw createError(404, "User not found");
     // Find the tour
     const tour = await this.Tour.findByPk(tourId);
-    if (!tour) {
-      throw new Error("Tour not found");
-    }
 
     // Prevent changing roles of the first manager
     if (tour.createdBy !== userId) {
-      throw new Error("The first manager cannot be downgraded or updated");
+      throw createError(
+        400,
+        "The first manager cannot be downgraded or updated"
+      );
     }
 
     // Find the UserRoleTour entry
@@ -100,7 +91,7 @@ class RoleService {
     });
 
     if (!userRoleTour) {
-      throw new Error("User is not assigned to this tour");
+      throw createError(400, "User is not assigned to this tour");
     }
 
     // Check if the role is the same
@@ -109,44 +100,34 @@ class RoleService {
     }
 
     userRoleTour.role = newRole;
-    await userRoleTour.save();
-
-    return {
-      success: true,
-      message: "User role updated successfully",
-      role: newRole,
-    };
+    return await userRoleTour.save();
   }
 
   // Delete user from tour
   async deleteUserFromTour(tourId, userId) {
     // Find the tour
     const tour = await this.Tour.findByPk(tourId);
-    if (!tour) {
-      throw new Error("Tour not found");
-    }
 
     // Prevent deleting the first manager
     if (tour.createdBy !== userId) {
-      throw new Error("The first manager cannot be removed from the tour");
+      throw createError(
+        400,
+        "The first manager cannot be removed from the tour"
+      );
     }
 
     // Find and delete the UserRoleTour entry
-    const rowsDeleted = await this.UserRoleTour.destroy({
+    const userRoleTour = await this.UserRoleTour.destroy({
       where: { tourId, userId },
     });
 
     if (!userRoleTour) {
-      throw new Error("User not found in this tour");
+      throw createError(400, "User not found in this tour");
     }
 
     await userRoleTour.destroy();
 
-    return {
-      success: true,
-      message: "User removed from the tour",
-      data: userRoleTour,
-    };
+    return userRoleTour;
   }
 }
 
