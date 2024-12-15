@@ -7,70 +7,60 @@ class ShowService {
     this.Show = db.Show;
     this.Artist = db.Artist;
     this.Tour = db.Tour;
+
+    // Default includes
+    this.defaultInclude = [
+      {
+        model: this.Artist,
+        attributes: ["id", "name"],
+      },
+    ];
   }
 
   // Get all shows
   async getAll() {
-    return await this.Show.findAll();
+    return await this.Show.findAll({
+      include: this.defaultInclude,
+    });
   }
 
-  // Get all shows on the tour
-  async getAllByTour(tourId) {
-    // Check that tour exists
+  // Find all shows on the tour or search with query
+  async getAllByTour(tourId, query = {}) {
+    // Check that tour exists - maybe this isnt needed as middleware stops it?
     const tour = await this.Tour.findByPk(tourId);
     if (!tour) throw createError(404, "Show not found");
 
-    return await this.Show.findAll({
-      where: { tourId },
-      include: [
-        {
-          model: this.Artist,
-          attributes: ["id", "name"],
-        },
-      ],
-      attributes: ["id", "date", "venue", "city", "country"],
-    });
-  }
+    const whereConditions = { tourId };
 
-  // Get show by id
-  async getById(id) {
-    const show = await this.Show.findByPk(id, {
-      include: [
-        {
-          model: this.Artist,
-          attributes: ["id", "name"],
-        },
-      ],
-    });
-    if (!show) throw createError(404, "Show not found");
-    return show;
-  }
-
-  // Search for shows by city, venue, date, country or artist
-  async search(query) {
-    const whereConditions = {};
-    const includeConditions = [
-      {
-        model: this.Artist,
-        attributes: ["id", "name"],
-        where: query.artist
-          ? { name: { [Op.like]: `%${query.artist}%` } }
-          : undefined,
-      },
-    ];
-
-    // Dynamic query
-    const showFields = ["city", "venue", "date", "country"];
-    showFields.forEach((field) => {
+    // Apply search filters
+    ["city", "venue", "date", "country"].forEach((field) => {
       if (query[field]) {
         whereConditions[field] = { [Op.like]: `%${query[field]}%` };
       }
     });
 
-    return await this.Show.findAll({
+    const shows = await this.Show.findAll({
       where: whereConditions,
-      include: includeConditions,
+      include: this.defaultInclude,
     });
+
+    if (!shows.length) {
+      throw createError(
+        404,
+        query.length ? "No shows found matching the query" : "No shows exist"
+      );
+    }
+
+    return shows;
+  }
+
+  // Get show by id
+  async getById(id) {
+    const show = await this.Show.findByPk(id, {
+      include: this.defaultInclude,
+    });
+    if (!show) throw createError(404, "Show not found");
+    return show;
   }
 
   // Create new show
