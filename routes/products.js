@@ -3,8 +3,8 @@ const router = express.Router();
 const db = require("../models");
 const ProductService = require("../services/ProductService");
 const productService = new ProductService(db);
-const multer = require("multer");
-const sharp = require("sharp");
+const createError = require("http-errors");
+const { multerUpload, uploadToS3, resizeImage } = require("../utils/upload");
 const { isAuth } = require("../middleware/auth");
 const {
   validateProduct,
@@ -106,42 +106,28 @@ router.delete("/:productId", async (req, res, next) => {
   }
 });
 
-// Multer setup for avatar uploads
-const upload = multer({
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-      return cb(new Error("Only image files are allowed"));
-    }
-    cb(null, true);
-  },
-});
-
 // Update product image
-router.patch(
+router.put(
   "/:productId/image",
-  upload.single("image"),
+  multerUpload.single("image"),
   async (req, res, next) => {
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: "No product image file provided",
-      });
+      throw createError(400, "No product image provided");
     }
 
     try {
       const { productId } = req.params;
       // Resize and convert the image to PNG
-      const resizedBuffer = await sharp(req.file.buffer)
-        .resize(300, 300)
-        .png()
-        .toBuffer();
+      const resizedBuffer = await resizeImage(req.file.buffer, 400, 400);
 
-      const updateData = {
-        image: resizedBuffer,
-      };
+      // Create/update product image in S3
+      const key = `products/${productId}-avatar.png`;
+      const imageUrl = await uploadToS3(key, resizedBuffer, "image/png");
 
-      const updatedProduct = await productService.update(productId, updateData);
+      const updatedProduct = await productService.update(productId, {
+        image: imageUrl,
+      });
+
       if (updatedProduct.noChanges) {
         return res.status(200).json({
           success: true,
@@ -159,23 +145,5 @@ router.patch(
     }
   }
 );
-
-// Get product image
-router.get("/:productId/image", async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const product = await productService.getById(productId);
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Product image not found" });
-    }
-
-    res.set("Content-Type", "image/png");
-    return res.send(product.image);
-  } catch (err) {
-    next(err);
-  }
-});
 
 module.exports = router;

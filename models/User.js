@@ -17,7 +17,7 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.DataTypes.STRING,
     },
     avatar: {
-      type: Sequelize.DataTypes.BLOB("medium"),
+      type: Sequelize.DataTypes.STRING,
     },
     encryptedPassword: {
       type: Sequelize.DataTypes.BLOB,

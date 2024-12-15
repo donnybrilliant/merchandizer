@@ -1,4 +1,5 @@
 const { isSameData } = require("../utils/checks");
+const createError = require("http-errors");
 
 class UserService {
   constructor(db) {
@@ -7,11 +8,9 @@ class UserService {
 
   // Get user by email
   async getByEmail(email) {
-    const user = await this.User.findOne({
+    return await this.User.findOne({
       where: { email },
     });
-    if (!user) throw createError(404, "User not found");
-    return user;
   }
 
   // Get user by id
@@ -26,7 +25,7 @@ class UserService {
   // Get all users
   async getAll() {
     return await this.User.findAll({
-      attributes: { exclude: ["encryptedPassword", "salt", "avatar"] },
+      attributes: { exclude: ["encryptedPassword", "salt"] },
     });
   }
 

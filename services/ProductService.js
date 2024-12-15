@@ -22,7 +22,6 @@ class ProductService {
           attributes: ["name"],
         },
       ],
-      attributes: { exclude: ["image"] },
     });
   }
 
