@@ -4,6 +4,9 @@ const db = require("../models");
 const RoleService = require("../services/RoleService");
 const roleService = new RoleService(db);
 const { authorize } = require("../middleware/auth");
+const { checkTourExists } = require("../middleware/resourceValidation");
+
+router.use(checkTourExists);
 
 router.post("/", authorize("manageUsers"), async (req, res, next) => {
   try {

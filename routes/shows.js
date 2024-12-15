@@ -11,6 +11,9 @@ const {
   validateMultipleShows,
   validateShowUpdate,
 } = require("../middleware/validation");
+const { checkTourExists } = require("../middleware/resourceValidation");
+
+router.use(checkTourExists);
 
 // Get all shows or search shows
 router.get("/", authorize("viewShows"), async (req, res, next) => {
