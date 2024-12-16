@@ -10,8 +10,10 @@ const {
   validateSingleInventoryUpdate,
   validateMultipleInventory,
   validateMultipleInventoryUpdate,
+  validateParam,
 } = require("../middleware/validation");
 const { authorize } = require("../middleware/auth");
+const { checkProductExists } = require("../middleware/resourceValidation");
 
 // Get inventory for a specific show
 router.get("/", authorize("viewInventory"), async (req, res, next) => {
@@ -34,12 +36,12 @@ router.get("/", authorize("viewInventory"), async (req, res, next) => {
 // Get inventory for a specific show and product
 router.get(
   "/:productId",
+  checkProductExists,
   authorize("viewInventory"),
   async (req, res, next) => {
     try {
       const { showId, productId } = req.params;
       const inventory = await inventoryService.getById(showId, productId);
-
       return res.status(200).json({ success: true, data: inventory });
     } catch (err) {
       next(err);
@@ -55,10 +57,12 @@ router.post(
   async (req, res, next) => {
     try {
       const { showId } = req.params;
-
       const inventories = await inventoryService.createMany(showId, req.body);
-
-      return res.status(201).json({ success: true, data: inventories });
+      return res.status(201).json({
+        success: true,
+        message: "Inventory created successfully",
+        data: inventories,
+      });
     } catch (err) {
       next(err);
     }
@@ -95,19 +99,22 @@ router.post("/copy", authorize("manageInventory"), async (req, res, next) => {
 // Add inventory item for a show
 router.post(
   "/:productId",
+  validateParam("productId"),
   authorize("manageInventory"),
   validateSingleInventory,
   async (req, res, next) => {
     try {
       const { showId, productId } = req.params;
-
       const newInventory = await inventoryService.create(
         showId,
         productId,
         req.body
       );
-
-      return res.status(201).json({ success: true, data: newInventory });
+      return res.status(201).json({
+        success: true,
+        message: "Inventory created successfully",
+        data: newInventory,
+      });
     } catch (err) {
       next(err);
     }
@@ -122,12 +129,10 @@ router.put(
   async (req, res, next) => {
     try {
       const { showId } = req.params;
-
       const { updated, unchanged } = await inventoryService.updateMany(
         showId,
         req.body
       );
-
       return res.status(200).json({
         success: true,
         message: "Inventory update processed",
@@ -145,18 +150,17 @@ router.put(
 // Update inventory item for a show
 router.put(
   "/:productId",
+  checkProductExists,
   authorize("manageInventory"),
   validateSingleInventoryUpdate,
   async (req, res, next) => {
     try {
       const { showId, productId } = req.params;
-
       const updatedInventory = await inventoryService.update(
         showId,
         productId,
         req.body
       );
-
       if (updatedInventory.noChanges) {
         return res.status(200).json({
           success: true,
@@ -164,8 +168,11 @@ router.put(
           data: updatedInventory.data,
         });
       }
-
-      return res.status(200).json({ success: true, data: updatedInventory });
+      return res.status(200).json({
+        success: true,
+        message: "Inventory updated successfully",
+        data: updatedInventory,
+      });
     } catch (err) {
       next(err);
     }
@@ -175,16 +182,15 @@ router.put(
 // Delete inventory item for a show
 router.delete(
   "/:productId",
+  checkProductExists,
   authorize("deleteInventory"),
   async (req, res, next) => {
     try {
       const { showId, productId } = req.params;
-
       const inventory = await inventoryService.delete(showId, productId);
-
       return res.status(200).json({
         success: true,
-        message: "Inventory item deleted successfully",
+        message: "Inventory deleted successfully",
         data: inventory,
       });
     } catch (err) {

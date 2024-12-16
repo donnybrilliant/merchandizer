@@ -16,20 +16,24 @@ class ArtistService {
       whereConditions.name = { [Op.like]: `%${query.name}%` };
     }
 
-    const artists = await this.Artist.findAll({
+    return await this.Artist.findAll({
       where: whereConditions,
     });
+  }
 
-    if (!artists.length) {
-      throw createError(
-        404,
-        query.length
-          ? `No artists found matching the query: ${query.name}`
-          : "No artists exist"
-      );
+  // Get artist by id
+  async getById(id) {
+    const artist = await this.Artist.findByPk(id);
+    if (!artist) throw createError(404, "Artist not found");
+    return artist;
+  }
+
+  // Check if artist name already exists
+  async checkName(name) {
+    const existingArtist = await this.Artist.findOne({ where: { name } });
+    if (existingArtist) {
+      throw createError(409, `Artist with the name ${name} already exists`);
     }
-
-    return artists;
   }
 
   // Create new artist

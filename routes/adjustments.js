@@ -7,6 +7,7 @@ const { authorize } = require("../middleware/auth");
 const {
   validateAdjustment,
   validateAdjustmentUpdate,
+  validateParam,
 } = require("../middleware/validation");
 
 // Get all adjustments for a show
@@ -14,7 +15,6 @@ router.get("/", authorize("viewAdjustments"), async (req, res, next) => {
   try {
     const { showId } = req.params;
     const adjustments = await adjustmentService.getAllByShow(showId);
-
     if (!adjustments.length) {
       return res.status(200).json({
         success: true,
@@ -22,10 +22,8 @@ router.get("/", authorize("viewAdjustments"), async (req, res, next) => {
         data: adjustments,
       });
     }
-
     return res.status(200).json({
       success: true,
-      message: "Adjustments retrieved successfully",
       data: adjustments,
     });
   } catch (err) {
@@ -36,6 +34,7 @@ router.get("/", authorize("viewAdjustments"), async (req, res, next) => {
 // Get adjustments for a product
 router.get(
   "/product/:productId",
+  validateParam("productId"),
   authorize("viewAdjustments"),
   async (req, res, next) => {
     try {
@@ -44,7 +43,6 @@ router.get(
         showId,
         productId
       );
-
       if (!adjustments.length) {
         return res.status(200).json({
           success: false,
@@ -53,7 +51,6 @@ router.get(
       }
       return res.status(200).json({
         success: true,
-        message: "Adjustments retrieved successfully",
         data: adjustments,
       });
     } catch (err) {
@@ -65,15 +62,14 @@ router.get(
 // Get a single adjustment by adjustmentId
 router.get(
   "/:adjustmentId",
+  validateParam("adjustmentId"),
   authorize("viewAdjustments"),
   async (req, res, next) => {
     try {
       const { adjustmentId } = req.params;
       const adjustment = await adjustmentService.getById(adjustmentId);
-
       return res.status(200).json({
         success: true,
-        message: "Adjustment retrieved successfully",
         data: adjustment,
       });
     } catch (err) {
@@ -111,6 +107,7 @@ router.post(
 // Update adjustment
 router.put(
   "/:adjustmentId",
+  validateParam("adjustmentId"),
   authorize("manageAdjustments"),
   validateAdjustmentUpdate,
   async (req, res, next) => {
@@ -120,7 +117,6 @@ router.put(
         adjustmentId,
         req.body
       );
-
       if (updatedAdjustment.noChanges) {
         return res.status(200).json({
           success: true,
@@ -143,6 +139,7 @@ router.put(
 // Delete adjustment
 router.delete(
   "/:adjustmentId",
+  validateParam("adjustmentId"),
   authorize("manageAdjustments"),
   async (req, res, next) => {
     try {

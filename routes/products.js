@@ -3,20 +3,31 @@ const router = express.Router();
 const db = require("../models");
 const ProductService = require("../services/ProductService");
 const productService = new ProductService(db);
-const createError = require("http-errors");
 const { multerUpload, uploadToS3, resizeImage } = require("../utils/upload");
 const { isAuth } = require("../middleware/auth");
 const {
   validateProduct,
   validateProductUpdate,
+  validateProductSearch,
+  validateImageUpload,
+  validateParam,
 } = require("../middleware/validation");
 
 router.use(isAuth);
 
 // Get all products or search by query
-router.get("/", async (req, res, next) => {
+router.get("/", validateProductSearch, async (req, res, next) => {
   try {
     const products = await productService.getAllByQuery(req.query);
+    if (!products.length) {
+      return res.status(200).json({
+        success: true,
+        message: Object.keys(req.query).length
+          ? "No products found matching the query"
+          : "No products exist",
+        data: products,
+      });
+    }
     return res.status(200).json({ success: true, data: products });
   } catch (err) {
     next(err);
@@ -24,52 +35,27 @@ router.get("/", async (req, res, next) => {
 });
 
 // Get product by id
-router.get("/:productId", async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const product = await productService.getById(productId);
-    return res.status(200).json({ success: true, data: product });
-  } catch (err) {
-    next(err);
+router.get(
+  "/:productId",
+  validateParam("productId"),
+  async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const product = await productService.getById(productId);
+      return res.status(200).json({ success: true, data: product });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Create new product
 router.post("/", validateProduct, async (req, res, next) => {
   try {
     const product = await productService.create(req.body);
-    return res.status(201).json({ success: true, data: product });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Update product by id
-router.put("/:productId", validateProductUpdate, async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const updatedProduct = await productService.update(productId, req.body);
-    if (updatedProduct.noChanges) {
-      return res.status(200).json({
-        success: true,
-        message: "No changes made to product",
-        data: updatedProduct.data,
-      });
-    }
-    return res.status(200).json({ success: true, data: updatedProduct });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// Delete product by id
-router.delete("/:productId", async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const product = await productService.delete(productId);
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
-      message: "Product deleted successfully",
+      message: "Product created successfully",
       data: product,
     });
   } catch (err) {
@@ -77,15 +63,59 @@ router.delete("/:productId", async (req, res, next) => {
   }
 });
 
+// Update product by id
+router.put(
+  "/:productId",
+  validateParam("productId"),
+  validateProductUpdate,
+  async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const updatedProduct = await productService.update(productId, req.body);
+      if (updatedProduct.noChanges) {
+        return res.status(200).json({
+          success: true,
+          message: "No changes made to product",
+          data: updatedProduct.data,
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        message: "Product updated successfully",
+        data: updatedProduct,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Delete product by id
+router.delete(
+  "/:productId",
+  validateParam("productId"),
+  async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const product = await productService.delete(productId);
+      return res.status(200).json({
+        success: true,
+        message: "Product deleted successfully",
+        data: product,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Update product image
 router.put(
   "/:productId/image",
+  validateParam("productId"),
   multerUpload.single("image"),
+  validateImageUpload("image"),
   async (req, res, next) => {
-    if (!req.file) {
-      throw createError(400, "No product image provided");
-    }
-
     try {
       const { productId } = req.params;
       // Resize and convert the image to PNG

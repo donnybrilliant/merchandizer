@@ -10,13 +10,24 @@ const {
   validateShow,
   validateMultipleShows,
   validateShowUpdate,
+  validateParam,
 } = require("../middleware/validation");
+const { checkShowExists } = require("../middleware/resourceValidation");
 
 // Get all shows or search shows
 router.get("/", authorize("viewShows"), async (req, res, next) => {
   try {
     const { tourId } = req.params;
     const shows = await showService.getAllByTour(tourId, req.query);
+    if (!shows.length) {
+      return res.status(200).json({
+        success: true,
+        message: Object.keys(req.query).length
+          ? "No shows found matching the query"
+          : "No shows exist",
+        data: shows,
+      });
+    }
     return res.status(200).json({ success: true, data: shows });
   } catch (err) {
     next(err);
@@ -42,15 +53,20 @@ router.get("/all", adminOnly, async (req, res, next) => {
 });
 
 // Get show by id
-router.get("/:showId", authorize("viewShows"), async (req, res, next) => {
-  try {
-    const { showId } = req.params;
-    const show = await showService.getById(showId);
-    return res.status(200).json({ success: true, data: show });
-  } catch (err) {
-    next(err);
+router.get(
+  "/:showId",
+  validateParam("showId"),
+  authorize("viewShows"),
+  async (req, res, next) => {
+    try {
+      const { showId } = req.params;
+      const show = await showService.getById(showId);
+      return res.status(200).json({ success: true, data: show });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Create new show
 router.post(
@@ -63,6 +79,7 @@ router.post(
       const show = await showService.create(tourId, req.body);
       return res.status(201).json({
         success: true,
+        message: "Show created successfully",
         data: show,
       });
     } catch (err) {
@@ -80,9 +97,9 @@ router.post(
     try {
       const { tourId } = req.params;
       const shows = await showService.createMany(tourId, req.body);
-
       return res.status(201).json({
         success: true,
+        message: "Shows created successfully",
         data: shows,
       });
     } catch (err) {
@@ -94,6 +111,7 @@ router.post(
 // Update show by id
 router.put(
   "/:showId",
+  validateParam("showId"),
   authorize("manageShows"),
   validateShowUpdate,
   async (req, res, next) => {
@@ -109,6 +127,7 @@ router.put(
       }
       return res.status(200).json({
         success: true,
+        message: "Show updated successfully",
         data: updatedShow,
       });
     } catch (err) {
@@ -118,21 +137,26 @@ router.put(
 );
 
 // Delete show by id
-router.delete("/:showId", authorize("manageShows"), async (req, res, next) => {
-  try {
-    const { showId } = req.params;
-    const show = await showService.delete(showId);
-    return res.status(200).json({
-      success: true,
-      message: "Show deleted successfully",
-      data: show,
-    });
-  } catch (err) {
-    next(err);
+router.delete(
+  "/:showId",
+  validateParam("showId"),
+  authorize("manageShows"),
+  async (req, res, next) => {
+    try {
+      const { showId } = req.params;
+      const show = await showService.delete(showId);
+      return res.status(200).json({
+        success: true,
+        message: "Show deleted successfully",
+        data: show,
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-router.use("/:showId/inventory", inventoryRouter);
-router.use("/:showId/adjustments", adjustmentRouter);
+router.use("/:showId/inventory", checkShowExists, inventoryRouter);
+router.use("/:showId/adjustments", checkShowExists, adjustmentRouter);
 
 module.exports = router;
