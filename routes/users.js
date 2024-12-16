@@ -3,11 +3,14 @@ const router = express.Router();
 const db = require("../models");
 const UserService = require("../services/UserService");
 const userService = new UserService(db);
+const AuthService = require("../services/AuthService");
+const authService = new AuthService(db);
 const { multerUpload, uploadToS3, resizeImage } = require("../utils/upload");
 const { isAuth, adminOnly } = require("../middleware/auth");
 const {
   validateUserUpdate,
   validateImageUpload,
+  validateNewPassword,
 } = require("../middleware/validation");
 
 router.use(isAuth);
@@ -121,6 +124,27 @@ router.put(
         success: true,
         message: "Avatar updated successfully",
         data: updatedUser,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// Change password
+router.put(
+  "/me/password",
+  isAuth,
+  validateNewPassword,
+  async (req, res, next) => {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    try {
+      await authService.changePassword(userId, oldPassword, newPassword);
+      return res.status(200).json({
+        success: true,
+        message: "Password changed successfully",
       });
     } catch (err) {
       next(err);

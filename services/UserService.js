@@ -6,13 +6,6 @@ class UserService {
     this.User = db.User;
   }
 
-  // Get user by email
-  async getByEmail(email) {
-    return await this.User.findOne({
-      where: { email },
-    });
-  }
-
   // Get user by id
   async getById(id) {
     const user = await this.User.findByPk(id, {
@@ -60,14 +53,6 @@ class UserService {
     const user = await this.getById(id);
     await user.destroy();
     return user;
-  }
-
-  // Change password
-  async changePassword(id, newHashedPassword, salt) {
-    return await this.User.update(
-      { encryptedPassword: newHashedPassword, salt },
-      { where: { id } }
-    );
   }
 }
 
