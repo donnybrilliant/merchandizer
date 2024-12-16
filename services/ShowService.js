@@ -52,6 +52,8 @@ class ShowService {
 
   // Create new show
   async create(tourId, data) {
+    const tour = await this.Tour.findByPk(tourId);
+
     // Validate the show date
     checkDateRange(data.date, tour.startDate, tour.endDate);
 
@@ -64,6 +66,9 @@ class ShowService {
 
   // Create multiple shows
   async createMany(tourId, showsData) {
+    // Check if tour exists once
+    const tour = await this.Tour.findByPk(tourId);
+
     // Validate and prepare shows data
     const newShows = [];
     for (const data of showsData) {
@@ -92,6 +97,8 @@ class ShowService {
 
     // Validate the new show date, if provided
     if (data.date) {
+      const tour = await this.Tour.findByPk(show.tourId);
+
       checkDateRange(data.date, tour.startDate, tour.endDate);
     }
 
