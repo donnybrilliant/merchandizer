@@ -100,11 +100,11 @@ class AuthService {
     const { hashedPassword: newHashedPassword, salt: newSalt } =
       await this.hashPassword(newPassword);
 
-    // Update the password in the database
-    return await this.User.update(
-      { encryptedPassword: newHashedPassword, salt: newSalt },
-      { where: { id } }
-    );
+    // Update user instance
+    user.encryptedPassword = newHashedPassword;
+    user.salt = newSalt;
+
+    return await user.save();
   }
 }
 
