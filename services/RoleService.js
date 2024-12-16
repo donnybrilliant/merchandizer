@@ -1,3 +1,4 @@
+const createError = require("http-errors");
 class RoleService {
   constructor(db) {
     this.Tour = db.Tour;
