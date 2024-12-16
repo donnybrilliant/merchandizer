@@ -16,25 +16,13 @@ class CategoryService {
       whereConditions.name = { [Op.like]: `%${query.name}%` };
     }
 
-    const categories = await this.Category.findAll({
+    return await this.Category.findAll({
       where: whereConditions,
     });
-
-    if (!categories.length) {
-      throw createError(
-        404,
-        query.name
-          ? `No categories found matching: ${query.name}`
-          : "No categories exist"
-      );
-    }
-
-    return categories;
   }
 
   // Get category by id
   async getById(id) {
-    // Check if category exists
     const category = await this.Category.findByPk(id);
     if (!category) throw createError(404, "Category not found");
     return category;

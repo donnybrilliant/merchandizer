@@ -26,10 +26,6 @@ class ShowService {
 
   // Find all shows on the tour or search with query
   async getAllByTour(tourId, query = {}) {
-    // Check that tour exists - maybe this isnt needed as middleware stops it?
-    const tour = await this.Tour.findByPk(tourId);
-    if (!tour) throw createError(404, "Show not found");
-
     const whereConditions = { tourId };
 
     // Apply search filters
@@ -39,19 +35,10 @@ class ShowService {
       }
     });
 
-    const shows = await this.Show.findAll({
+    return await this.Show.findAll({
       where: whereConditions,
       include: this.defaultInclude,
     });
-
-    if (!shows.length) {
-      throw createError(
-        404,
-        query.length ? "No shows found matching the query" : "No shows exist"
-      );
-    }
-
-    return shows;
   }
 
   // Get show by id
@@ -65,10 +52,6 @@ class ShowService {
 
   // Create new show
   async create(tourId, data) {
-    // Check if tour exists
-    const tour = await this.Tour.findByPk(tourId);
-    if (!tour) throw createError(404, "Tour not found. Cannot create show");
-
     // Validate the show date
     checkDateRange(data.date, tour.startDate, tour.endDate);
 
@@ -81,10 +64,6 @@ class ShowService {
 
   // Create multiple shows
   async createMany(tourId, showsData) {
-    // Check if tour exists once
-    const tour = await this.Tour.findByPk(tourId);
-    if (!tour) throw createError(404, "Tour not found. Cannot create shows.");
-
     // Validate and prepare shows data
     const newShows = [];
     for (const data of showsData) {
@@ -96,7 +75,7 @@ class ShowService {
       if (!artist) {
         throw createError(
           404,
-          `Artist not found for show with date ${data.date}. Cannot create show.`
+          `Artist not found for show with date ${data.date}. Cannot create show`
         );
       }
 
@@ -113,9 +92,6 @@ class ShowService {
 
     // Validate the new show date, if provided
     if (data.date) {
-      const tour = await this.Tour.findByPk(show.tourId);
-      if (!tour) throw createError(404, "Tour not found");
-
       checkDateRange(data.date, tour.startDate, tour.endDate);
     }
 

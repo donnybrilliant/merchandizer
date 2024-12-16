@@ -42,7 +42,7 @@ router.post("/login", validateLogin, async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      message: "You are logged in",
+      message: "You are now logged in",
       data: {
         id: user.id,
         email: user.email,
