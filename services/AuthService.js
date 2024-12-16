@@ -15,6 +15,23 @@ class AuthService {
     });
   }
 
+  // Method for password hashing
+  async hashPassword(password, salt = crypto.randomBytes(16)) {
+    return new Promise((resolve, reject) => {
+      crypto.pbkdf2(
+        password,
+        salt,
+        310000,
+        32,
+        "sha256",
+        (err, hashedPassword) => {
+          if (err) return reject(err);
+          resolve({ hashedPassword, salt });
+        }
+      );
+    });
+  }
+
   // Get user by email
   async getByEmail(email) {
     return await this.User.findOne({
