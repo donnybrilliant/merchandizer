@@ -10,10 +10,9 @@ const {
   validateShow,
   validateMultipleShows,
   validateShowUpdate,
+  validateParam,
 } = require("../middleware/validation");
-const { checkTourExists } = require("../middleware/resourceValidation");
-
-router.use(checkTourExists);
+const { checkShowExists } = require("../middleware/resourceValidation");
 
 // Get all shows or search shows
 router.get("/", authorize("viewShows"), async (req, res, next) => {
@@ -54,15 +53,20 @@ router.get("/all", adminOnly, async (req, res, next) => {
 });
 
 // Get show by id
-router.get("/:showId", authorize("viewShows"), async (req, res, next) => {
-  try {
-    const { showId } = req.params;
-    const show = await showService.getById(showId);
-    return res.status(200).json({ success: true, data: show });
-  } catch (err) {
-    next(err);
+router.get(
+  "/:showId",
+  validateParam("showId"),
+  authorize("viewShows"),
+  async (req, res, next) => {
+    try {
+      const { showId } = req.params;
+      const show = await showService.getById(showId);
+      return res.status(200).json({ success: true, data: show });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Create new show
 router.post(
@@ -107,6 +111,7 @@ router.post(
 // Update show by id
 router.put(
   "/:showId",
+  validateParam("showId"),
   authorize("manageShows"),
   validateShowUpdate,
   async (req, res, next) => {
@@ -132,21 +137,26 @@ router.put(
 );
 
 // Delete show by id
-router.delete("/:showId", authorize("manageShows"), async (req, res, next) => {
-  try {
-    const { showId } = req.params;
-    const show = await showService.delete(showId);
-    return res.status(200).json({
-      success: true,
-      message: "Show deleted successfully",
-      data: show,
-    });
-  } catch (err) {
-    next(err);
+router.delete(
+  "/:showId",
+  validateParam("showId"),
+  authorize("manageShows"),
+  async (req, res, next) => {
+    try {
+      const { showId } = req.params;
+      const show = await showService.delete(showId);
+      return res.status(200).json({
+        success: true,
+        message: "Show deleted successfully",
+        data: show,
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-router.use("/:showId/inventory", inventoryRouter);
-router.use("/:showId/adjustments", adjustmentRouter);
+router.use("/:showId/inventory", checkShowExists, inventoryRouter);
+router.use("/:showId/adjustments", checkShowExists, adjustmentRouter);
 
 module.exports = router;

@@ -7,6 +7,7 @@ const { isAuth, authorize } = require("../middleware/auth");
 const {
   checkTourExists,
   checkShowExists,
+  checkProductExists,
 } = require("../middleware/resourceValidation");
 
 router.use(isAuth);
@@ -15,6 +16,7 @@ router.use(checkTourExists);
 // Get stats for a specific show
 router.get(
   "/tours/:tourId/shows/:showId",
+  checkShowExists,
   authorize("viewStats"),
   checkShowExists,
   async (req, res, next) => {
@@ -42,6 +44,7 @@ router.get("/tours/:tourId", authorize("viewStats"), async (req, res, next) => {
 // Get stats for a product in a specific tour
 router.get(
   "/tours/:tourId/products/:productId",
+  checkProductExists,
   authorize("viewStats"),
   async (req, res, next) => {
     try {

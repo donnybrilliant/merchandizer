@@ -7,10 +7,8 @@ const { authorize } = require("../middleware/auth");
 const {
   validateAdjustment,
   validateAdjustmentUpdate,
+  validateParam,
 } = require("../middleware/validation");
-const { checkShowExists } = require("../middleware/resourceValidation");
-
-router.use(checkShowExists);
 
 // Get all adjustments for a show
 router.get("/", authorize("viewAdjustments"), async (req, res, next) => {
@@ -36,6 +34,7 @@ router.get("/", authorize("viewAdjustments"), async (req, res, next) => {
 // Get adjustments for a product
 router.get(
   "/product/:productId",
+  validateParam("productId"),
   authorize("viewAdjustments"),
   async (req, res, next) => {
     try {
@@ -63,6 +62,7 @@ router.get(
 // Get a single adjustment by adjustmentId
 router.get(
   "/:adjustmentId",
+  validateParam("adjustmentId"),
   authorize("viewAdjustments"),
   async (req, res, next) => {
     try {
@@ -107,6 +107,7 @@ router.post(
 // Update adjustment
 router.put(
   "/:adjustmentId",
+  validateParam("adjustmentId"),
   authorize("manageAdjustments"),
   validateAdjustmentUpdate,
   async (req, res, next) => {
@@ -138,6 +139,7 @@ router.put(
 // Delete adjustment
 router.delete(
   "/:adjustmentId",
+  validateParam("adjustmentId"),
   authorize("manageAdjustments"),
   async (req, res, next) => {
     try {

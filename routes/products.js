@@ -10,6 +10,7 @@ const {
   validateProductUpdate,
   validateProductSearch,
   validateImageUpload,
+  validateParam,
 } = require("../middleware/validation");
 
 router.use(isAuth);
@@ -34,15 +35,19 @@ router.get("/", validateProductSearch, async (req, res, next) => {
 });
 
 // Get product by id
-router.get("/:productId", async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const product = await productService.getById(productId);
-    return res.status(200).json({ success: true, data: product });
-  } catch (err) {
-    next(err);
+router.get(
+  "/:productId",
+  validateParam("productId"),
+  async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const product = await productService.getById(productId);
+      return res.status(200).json({ success: true, data: product });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Create new product
 router.post("/", validateProduct, async (req, res, next) => {
@@ -59,45 +64,55 @@ router.post("/", validateProduct, async (req, res, next) => {
 });
 
 // Update product by id
-router.put("/:productId", validateProductUpdate, async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const updatedProduct = await productService.update(productId, req.body);
-    if (updatedProduct.noChanges) {
+router.put(
+  "/:productId",
+  validateParam("productId"),
+  validateProductUpdate,
+  async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const updatedProduct = await productService.update(productId, req.body);
+      if (updatedProduct.noChanges) {
+        return res.status(200).json({
+          success: true,
+          message: "No changes made to product",
+          data: updatedProduct.data,
+        });
+      }
       return res.status(200).json({
         success: true,
-        message: "No changes made to product",
-        data: updatedProduct.data,
+        message: "Product updated successfully",
+        data: updatedProduct,
       });
+    } catch (err) {
+      next(err);
     }
-    return res.status(200).json({
-      success: true,
-      message: "Product updated successfully",
-      data: updatedProduct,
-    });
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 // Delete product by id
-router.delete("/:productId", async (req, res, next) => {
-  try {
-    const { productId } = req.params;
-    const product = await productService.delete(productId);
-    return res.status(200).json({
-      success: true,
-      message: "Product deleted successfully",
-      data: product,
-    });
-  } catch (err) {
-    next(err);
+router.delete(
+  "/:productId",
+  validateParam("productId"),
+  async (req, res, next) => {
+    try {
+      const { productId } = req.params;
+      const product = await productService.delete(productId);
+      return res.status(200).json({
+        success: true,
+        message: "Product deleted successfully",
+        data: product,
+      });
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
 // Update product image
 router.put(
   "/:productId/image",
+  validateParam("productId"),
   multerUpload.single("image"),
   validateImageUpload("image"),
   async (req, res, next) => {
