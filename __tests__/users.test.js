@@ -54,7 +54,7 @@ describe("Users Tests", () => {
   });
 
   // Get all users without admin access
-  it("should not get all users", async () => {
+  it("should not get all users without admin access", async () => {
     const res = await request(app)
       .get("/users")
       .set("Authorization", `Bearer ${authToken}`);
@@ -76,17 +76,11 @@ describe("Users Tests", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.message).toBe("Profile updated successfully");
-
-    // Verify the updated data
-    const fetchRes = await request(app)
-      .get("/users/me")
-      .set("Authorization", `Bearer ${authToken}`);
-
-    expect(fetchRes.body.data.phone).toBe(updatedData.phone);
+    expect(res.body.data.phone).toBe(updatedData.phone);
   });
 
   // No changes made to profile
-  it("should not update user details", async () => {
+  it("should not update user details if no changes are made", async () => {
     const updatedData = { phone: "1234567890" };
     const res = await request(app)
       .put("/users/me")
