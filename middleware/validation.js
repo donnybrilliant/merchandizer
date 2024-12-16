@@ -1,4 +1,10 @@
-const { check, body, query, validationResult } = require("express-validator");
+const {
+  check,
+  body,
+  query,
+  param,
+  validationResult,
+} = require("express-validator");
 const createError = require("http-errors");
 
 // Middleware to handle validation errors
@@ -53,6 +59,15 @@ const validateQueryParams = (allowedParams) => [
 
     return true;
   }),
+];
+
+const validateParam = (name) => [
+  param(name)
+    .notEmpty()
+    .withMessage(`${name} is required`)
+    .isInt({ min: 1 })
+    .withMessage(`${name} must be a valid integer`),
+  handleValidationErrors,
 ];
 
 // Login validation
