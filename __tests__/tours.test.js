@@ -1,18 +1,7 @@
 const request = require("supertest");
 const app = require("../app");
-const db = require("../models");
 
 describe("Tours Tests", () => {
-  const testUser = {
-    firstName: "Test",
-    lastName: "User",
-    email: "test@test.com",
-    password: "password",
-  };
-
-  let authToken;
-  let artistId;
-  let artistName = "Test Artist";
   let tourId;
   let tourName = "Test Tour";
   let tourData = {
@@ -21,35 +10,12 @@ describe("Tours Tests", () => {
     endDate: "2025-01-10",
   };
 
-  // Setup: Register and log in the test user
-  beforeAll(async () => {
-    // Register the test user
-    await request(app).post("/register").send(testUser);
-
-    // Log in and get the token
-    const loginRes = await request(app).post("/login").send({
-      email: testUser.email,
-      password: testUser.password,
-    });
-
-    authToken = loginRes.body.data.token;
-
-    // Create an artist
-    const artistRes = await request(app)
-      .post("/artists")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({ name: artistName });
-    artistId = artistRes.body.data.id;
-
+  // Global setup
+  beforeAll(() => {
+    authToken = global.authToken;
+    artistId = global.artistId;
+    artistName = global.artistName;
     tourData.artistId = artistId;
-  });
-
-  // Cleanup after all tests
-  afterAll(async () => {
-    await db.User.destroy({ where: { email: testUser.email } });
-    await db.Artist.destroy({ where: { id: artistId } });
-    await db.Tour.destroy({ where: { id: tourId } });
-    await db.sequelize.close();
   });
 
   // Create a tour

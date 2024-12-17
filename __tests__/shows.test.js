@@ -1,25 +1,7 @@
 const request = require("supertest");
 const app = require("../app");
-const db = require("../models");
 
 describe("Shows Tests", () => {
-  const testUser = {
-    firstName: "Test",
-    lastName: "User",
-    email: "test@test.com",
-    password: "password",
-  };
-
-  let authToken;
-  let artistId;
-  let artistName = "Test Artist";
-  let tourId;
-  let tourName = "Test Tour";
-  let tourData = {
-    name: tourName,
-    startDate: "2025-01-01",
-    endDate: "2025-01-10",
-  };
   let showId;
   let showData = {
     date: "2025-01-01",
@@ -27,44 +9,22 @@ describe("Shows Tests", () => {
     city: "Test City",
     country: "Test Country",
   };
+  let showUpdate = {
+    getInTime: "15:30",
+    loadOutTime: "22:00",
+    doorsTime: "19:00",
+    onStageTime: "21:00",
+  };
 
-  // Setup: Register and log in the test user
-  beforeAll(async () => {
-    // Register the test user
-    await request(app).post("/register").send(testUser);
-
-    // Log in and get the token
-    const loginRes = await request(app).post("/login").send({
-      email: testUser.email,
-      password: testUser.password,
-    });
-
-    authToken = loginRes.body.data.token;
-
-    // Create an artist
-    const artistRes = await request(app)
-      .post("/artists")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({ name: artistName });
-    artistId = artistRes.body.data.id;
-    tourData.artistId = artistId;
+  // Global setup
+  beforeAll(() => {
+    authToken = global.authToken;
+    artistId = global.artistId;
+    artistName = global.artistName;
+    tourId = global.tourId;
+    tourName = global.tourName;
     showData.artistId = artistId;
-
-    // Create a tour
-    const tourRes = await request(app)
-      .post("/tours")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send(tourData);
-    tourId = tourRes.body.data.id;
-  });
-
-  // Cleanup after all tests
-  afterAll(async () => {
-    await db.User.destroy({ where: { email: testUser.email } });
-    await db.Artist.destroy({ where: { id: artistId } });
-    await db.Tour.destroy({ where: { id: tourId } });
-    await db.Show.destroy({ where: { id: showId } });
-    await db.sequelize.close();
+    showData.tourId = tourId;
   });
 
   // Create a show
@@ -87,7 +47,7 @@ describe("Shows Tests", () => {
   });
 
   // Get created show
-  it("should get a show successfully", async () => {
+  it("should get a specific show successfully", async () => {
     const res = await request(app)
       .get(`/tours/${tourId}/shows/${showId}`)
       .set("Authorization", `Bearer ${authToken}`);
@@ -154,12 +114,6 @@ describe("Shows Tests", () => {
 
   // Update a show
   it("should update a show successfully", async () => {
-    const showUpdate = {
-      getInTime: "15:30",
-      loadOutTime: "22:00",
-      doorsTime: "19:00",
-      onStageTime: "21:00",
-    };
     const res = await request(app)
       .put(`/tours/${tourId}/shows/${showId}`)
       .set("Authorization", `Bearer ${authToken}`)
@@ -187,17 +141,16 @@ describe("Shows Tests", () => {
   });
 
   // Update a show with no changes
-  /*   it("should not update a show with no changes", async () => {
+  it("should not update a show with no changes", async () => {
     const res = await request(app)
       .put(`/tours/${tourId}/shows/${showId}`)
       .set("Authorization", `Bearer ${authToken}`)
-      .send(showData);
+      .send(showUpdate);
 
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.message).toBe("No changes made to show");
-    expect(res.body.data).toMatchObject(showData);
-  }); */
+  });
 
   // Delete a show
   it("should delete a show successfully", async () => {

@@ -1,41 +1,16 @@
 const request = require("supertest");
 const app = require("../app");
-const db = require("../models");
 
 describe("Users Tests", () => {
-  const testUser = {
-    firstName: "Test",
-    lastName: "User",
-    email: "test@test.com",
-    password: "password",
-  };
-
-  let authToken;
-  let userId;
-
-  // Setup: Register and log in the test user
+  // Global setup
   beforeAll(async () => {
-    // Register the test user
-    await request(app).post("/register").send(testUser);
-
-    // Log in and get the token
-    const loginRes = await request(app).post("/login").send({
-      email: testUser.email,
-      password: testUser.password,
-    });
-
-    authToken = loginRes.body.data.token;
-    userId = loginRes.body.data.id;
-  });
-
-  // Cleanup after all tests
-  afterAll(async () => {
-    await db.User.destroy({ where: { email: testUser.email } });
-    await db.sequelize.close();
+    authToken = global.authToken;
+    testUser = global.testUser;
+    userId = global.testUser.id;
   });
 
   // Get the current user
-  it("should fetch the current user details", async () => {
+  it("should get the current user details", async () => {
     const res = await request(app)
       .get("/users/me")
       .set("Authorization", `Bearer ${authToken}`);
@@ -105,7 +80,7 @@ describe("Users Tests", () => {
   });
 
   // Upload avatar
-  it("should not upload avatar", async () => {
+  it("should not upload avatar with no file", async () => {
     const res = await request(app)
       .put("/users/me/avatar")
       .set("Authorization", `Bearer ${authToken}`)

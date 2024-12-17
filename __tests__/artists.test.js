@@ -1,38 +1,13 @@
 const request = require("supertest");
 const app = require("../app");
-const db = require("../models");
 
 describe("Artists Tests", () => {
-  const testUser = {
-    firstName: "Test",
-    lastName: "User",
-    email: "test@test.com",
-    password: "password",
-  };
-
-  let authToken;
   let artistId;
-  let artistName = "Test Artist";
+  const artistName = "Test Artist";
 
-  // Setup: Register and log in the test user
-  beforeAll(async () => {
-    // Register the test user
-    await request(app).post("/register").send(testUser);
-
-    // Log in and get the token
-    const loginRes = await request(app).post("/login").send({
-      email: testUser.email,
-      password: testUser.password,
-    });
-
-    authToken = loginRes.body.data.token;
-  });
-
-  // Cleanup after all tests
-  afterAll(async () => {
-    await db.User.destroy({ where: { email: testUser.email } });
-    await db.Artist.destroy({ where: { name: artistName } });
-    await db.sequelize.close();
+  // Global setup
+  beforeAll(() => {
+    authToken = global.authToken;
   });
 
   // Create an artist
@@ -57,13 +32,11 @@ describe("Artists Tests", () => {
 
     expect(res.statusCode).toBe(409);
     expect(res.body.success).toBe(false);
-    expect(res.body.error).toBe(
-      `Artist with the name ${artistName} already exists`
-    );
+    expect(res.body.error).toBe(`Artist ${artistName} already exists`);
   });
 
-  // Fetch all artists
-  it("should fetch all artists successfully", async () => {
+  // Get all artists
+  it("should get all artists successfully", async () => {
     const res = await request(app)
       .get("/artists")
       .set("Authorization", `Bearer ${authToken}`);
@@ -73,8 +46,8 @@ describe("Artists Tests", () => {
     expect(res.body.data).toBeInstanceOf(Array);
   });
 
-  // Fetch a specific artist
-  it("should fetch a specific artist successfully", async () => {
+  // Get a specific artist
+  it("should get a specific artist successfully", async () => {
     const res = await request(app)
       .get(`/artists/${artistId}`)
       .set("Authorization", `Bearer ${authToken}`);
