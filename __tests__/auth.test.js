@@ -4,16 +4,15 @@ const db = require("../models");
 
 describe("Auth Tests", () => {
   const testUser = {
-    firstName: "Test",
+    firstName: "Auth",
     lastName: "User",
-    email: "test@test.com",
+    email: "auth@test.com",
     password: "password",
   };
 
   // Cleanup after all tests
   afterAll(async () => {
     await db.User.destroy({ where: { email: testUser.email } });
-    await db.sequelize.close();
   });
 
   // Test Registration
