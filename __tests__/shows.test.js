@@ -1,8 +1,10 @@
 const request = require("supertest");
 const app = require("../app");
+const db = require("../models");
 
 describe("Shows Tests", () => {
   let showId;
+  let bulkShowIds = [];
   let showData = {
     date: "2025-01-01",
     venue: "Test Venue",
@@ -25,6 +27,16 @@ describe("Shows Tests", () => {
     tourName = global.tourName;
     showData.artistId = artistId;
     showData.tourId = tourId;
+  });
+
+  afterAll(async () => {
+    /*      if (showId) {
+        await db.Show.destroy({ where: { id: showId } });
+      } */
+
+    if (bulkShowIds.length > 0) {
+      await db.Show.destroy({ where: { id: bulkShowIds } });
+    }
   });
 
   // Create a show
@@ -71,7 +83,7 @@ describe("Shows Tests", () => {
     });
   });
 
-  // Bulk create shows
+  // Bulk create shows - should i delete the shows after this test?
   it("should bulk create shows successfully", async () => {
     const showsData = [
       { ...showData, date: "2025-01-02" },
@@ -87,6 +99,7 @@ describe("Shows Tests", () => {
     expect(res.body.message).toBe("Shows created successfully");
     expect(res.body.data).toBeInstanceOf(Array);
     expect(res.body.data.length).toBeGreaterThan(1);
+    bulkShowIds = res.body.data.map((show) => show.id);
   });
 
   // Get all shows for a tour
