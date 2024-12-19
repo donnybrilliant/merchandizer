@@ -4,9 +4,9 @@ const db = require("../models");
 
 describe("Inventory Tests", () => {
   const testUser = {
-    firstName: "Tour",
+    firstName: "Inventory",
     lastName: "User",
-    email: "tour@test.com",
+    email: "inventory@test.com",
     password: "password",
   };
 
