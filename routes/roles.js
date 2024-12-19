@@ -26,13 +26,6 @@ router.get("/", authorize("manageUsers"), async (req, res, next) => {
   try {
     const { tourId } = req.params;
     const users = await roleService.getUsersForTour(tourId);
-    if (!users.length) {
-      return res.status(200).json({
-        success: true,
-        message: "No users found for this tour",
-        data: users,
-      });
-    }
     return res.status(200).json({ success: true, data: users });
   } catch (error) {
     next(error);
