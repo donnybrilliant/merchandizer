@@ -3,7 +3,7 @@ const app = require("../app");
 
 describe("Users Tests", () => {
   // Global setup
-  beforeAll(async () => {
+  beforeAll(() => {
     authToken = global.authToken;
     testUser = global.testUser;
     userId = global.testUser.id;

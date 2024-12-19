@@ -20,7 +20,7 @@ describe("Products Tests", () => {
   };
 
   // Global setup
-  beforeAll(async () => {
+  beforeAll(() => {
     authToken = global.authToken;
     categoryId = global.categoryId;
     categoryName = global.categoryName;
