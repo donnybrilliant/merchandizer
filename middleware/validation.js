@@ -313,7 +313,8 @@ const validateProduct = [
       "Price must be a valid decimal number with up to 2 decimal places"
     ),
   body("categoryId")
-    .optional()
+    .notEmpty()
+    .withMessage("Category ID is required")
     .isInt()
     .withMessage("Category ID must be a valid integer"),
   body("artistId")
@@ -485,28 +486,25 @@ const validateAdjustmentUpdate = [
     .optional()
     .isIn(["giveaway", "discount", "loss", "restock"])
     .withMessage("Type must be one of: giveaway, discount, loss or restock"),
+
   body("discountValue")
-    .optional()
     .if((value, { req }) => req.body.type === "discount")
     .notEmpty()
     .withMessage("Discount value is required for type 'discount'")
     .isDecimal({ decimal_digits: "2" })
     .withMessage("Discount value must be a positive decimal number"),
   body("discountType")
-    .optional()
     .if((value, { req }) => req.body.type === "discount")
     .notEmpty()
     .withMessage("Discount type is required for type 'discount'")
     .isIn(["fixed", "percentage"])
     .withMessage("Discount type must be 'fixed' or 'percentage'"),
   body("discountValue")
-    .optional()
-    .if((value, { req }) => req.body.type !== "discount")
+    .if((value, { req }) => req.body.type && req.body.type !== "discount")
     .isEmpty()
     .withMessage("Discount value is not allowed unless type is 'discount'"),
   body("discountType")
-    .optional()
-    .if((value, { req }) => req.body.type !== "discount")
+    .if((value, { req }) => req.body.type && req.body.type !== "discount")
     .isEmpty()
     .withMessage("Discount type is not allowed unless type is 'discount'"),
   handleValidationErrors,
