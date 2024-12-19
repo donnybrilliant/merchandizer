@@ -1,12 +1,33 @@
 const request = require("supertest");
 const app = require("../app");
+const db = require("../models");
 
 describe("Users Tests", () => {
+  const testUser = {
+    firstName: "User",
+    lastName: "Test",
+    email: "user@test.com",
+    password: "password",
+  };
+
   // Global setup
-  beforeAll(() => {
-    authToken = global.authToken;
-    testUser = global.testUser;
-    userId = global.testUser.id;
+  beforeAll(async () => {
+    // Register the test user
+    await request(app).post("/register").send(testUser);
+
+    // Log in and get the token
+    const loginRes = await request(app).post("/login").send({
+      email: testUser.email,
+      password: testUser.password,
+    });
+
+    authToken = loginRes.body.data.token;
+    userId = loginRes.body.data.id;
+  });
+
+  // Cleanup after all tests
+  afterAll(async () => {
+    await db.User.destroy({ where: { id: userId } });
   });
 
   // Get the current user
