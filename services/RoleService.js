@@ -79,7 +79,7 @@ class RoleService {
     const tour = await this.Tour.findByPk(tourId);
 
     // Prevent changing roles of the first manager
-    if (tour.createdBy !== userId) {
+    if (tour.createdBy === userId) {
       throw createError(
         400,
         "The first manager cannot be downgraded or updated"
@@ -106,28 +106,24 @@ class RoleService {
 
   // Delete user from tour
   async deleteUserFromTour(tourId, userId) {
-    // Find the tour
     const tour = await this.Tour.findByPk(tourId);
 
     // Prevent deleting the first manager
-    if (tour.createdBy !== userId) {
+    if (tour.createdBy === userId) {
       throw createError(
         400,
         "The first manager cannot be removed from the tour"
       );
     }
 
-    // Find and delete the UserRoleTour entry
-    const userRoleTour = await this.UserRoleTour.destroy({
+    // Find the UserRoleTour entry
+    const userRoleTour = await this.UserRoleTour.findOne({
       where: { tourId, userId },
     });
-
     if (!userRoleTour) {
       throw createError(400, "User not found in this tour");
     }
-
     await userRoleTour.destroy();
-
     return userRoleTour;
   }
 }
