@@ -10,6 +10,7 @@ module.exports = async () => {
   };
 
   try {
+    process.env.NODE_ENV = "test";
     await db.sequelize.sync({ force: false });
     // Register the test user
     await request(app).post("/register").send(testUser);
