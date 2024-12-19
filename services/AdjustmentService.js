@@ -110,6 +110,22 @@ class AdjustmentService {
       return { noChanges: true, data: adjustment };
     }
 
+    // Prevent discountType or discountValue updates if type is not discount
+    if (adjustment.type !== "discount") {
+      if (data.discountValue !== undefined || data.discountType !== undefined) {
+        throw createError(
+          400,
+          "Cannot update discountValue or discountType unless type is 'discount'"
+        );
+      }
+    }
+
+    // Check if discount type is being changed
+    if (adjustment.type === "discount" && data.type !== "discount") {
+      data.discountValue = null;
+      data.discountType = null;
+    }
+
     await adjustment.update(data);
     return adjustment;
   }
