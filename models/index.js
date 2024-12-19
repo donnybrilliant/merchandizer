@@ -2,7 +2,6 @@ const Sequelize = require("sequelize");
 const fs = require("fs");
 const path = require("path");
 const basename = path.basename(__filename);
-const logging = process.env.NODE_ENV !== "test";
 const connection = {
   database: process.env.DATABASE_NAME,
   username: process.env.ADMIN_USERNAME,
@@ -13,7 +12,7 @@ const connection = {
   define: {
     timestamps: false,
   },
-  logging,
+  logging: false,
 };
 
 const sequelize = new Sequelize(connection);
