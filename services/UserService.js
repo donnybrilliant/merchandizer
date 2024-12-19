@@ -9,7 +9,7 @@ class UserService {
   // Get user by id
   async getById(id) {
     const user = await this.User.findByPk(id, {
-      attributes: { exclude: ["encryptedPassword", "salt"] },
+      attributes: { exclude: ["encryptedPassword", "salt", "role"] },
     });
     if (!user) throw createError(404, "User not found");
     return user;
