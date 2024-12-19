@@ -7,11 +7,22 @@ function isSameData(instance, newData) {
   return Object.keys(newData).every((key) => {
     const currentValue = data[key];
     const newValue = newData[key];
-    // Normalize values
+
+    // Normalize time values by removing seconds
+    const normalizeTime = (time) => {
+      if (typeof time === "string" && time.includes(":")) {
+        return time.split(":").slice(0, 2).join(":");
+      }
+      return time;
+    };
+
     const normalizedCurrent = isNaN(currentValue)
-      ? currentValue
+      ? normalizeTime(currentValue)
       : parseFloat(currentValue);
-    const normalizedNew = isNaN(newValue) ? newValue : parseFloat(newValue);
+    const normalizedNew = isNaN(newValue)
+      ? normalizeTime(newValue)
+      : parseFloat(newValue);
+
     return normalizedCurrent === normalizedNew;
   });
 }
