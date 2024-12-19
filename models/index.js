@@ -13,7 +13,7 @@ const connection = {
   define: {
     timestamps: false,
   },
-  logging: logging,
+  logging,
 };
 
 const sequelize = new Sequelize(connection);
