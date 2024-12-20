@@ -61,15 +61,6 @@ const validateQueryParams = (allowedParams) => [
   }),
 ];
 
-const validateParam = (name) => [
-  param(name)
-    .notEmpty()
-    .withMessage(`${name} is required`)
-    .isInt({ min: 1 })
-    .withMessage(`${name} must be a valid integer`),
-  handleValidationErrors,
-];
-
 // Login validation
 const validateLogin = [
   body("email").isEmail().withMessage("A valid email is required"),
@@ -635,5 +626,4 @@ module.exports = {
   validateProductSearch,
   validateShowSearch,
   validateImageUpload,
-  validateParam,
 };
