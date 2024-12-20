@@ -21,7 +21,10 @@ class InventoryService {
     });
 
     if (existingInventory) {
-      throw new Error(`Inventory for product ${productId} already exists`);
+      throw createError(
+        409,
+        `Inventory for product ${productId} already exists`
+      );
     }
   }
 

@@ -32,7 +32,7 @@ class ArtistService {
   async checkName(name) {
     const existingArtist = await this.Artist.findOne({ where: { name } });
     if (existingArtist) {
-      throw createError(409, `Artist with the name ${name} already exists`);
+      throw createError(409, `Artist ${name} already exists`);
     }
   }
 
