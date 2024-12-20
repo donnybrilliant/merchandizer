@@ -72,10 +72,7 @@ class TourService {
   }
 
   // Update tour
-  async update(id, data) {
-    // Check if tour exists
-    const tour = await this.getById(id);
-
+  async update(tour, data) {
     // Check if no changes are made
     if (isSameData(tour, data)) {
       return { noChanges: true, data: tour };
@@ -86,9 +83,7 @@ class TourService {
   }
 
   // Delete tour
-  async delete(id) {
-    // Check if tour exists
-    const tour = await this.getById(id);
+  async delete(tour) {
     await tour.destroy();
     return tour;
   }

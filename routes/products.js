@@ -37,9 +37,7 @@ router.get("/", validateProductSearch, async (req, res, next) => {
 // Get product by id
 router.get("/:productId", async (req, res, next) => {
   try {
-    const { productId } = req.params;
-    const product = await productService.getById(productId);
-    return res.status(200).json({ success: true, data: product });
+    return res.status(200).json({ success: true, data: req.product });
   } catch (err) {
     next(err);
   }
@@ -62,8 +60,7 @@ router.post("/", validateProduct, async (req, res, next) => {
 // Update product by id
 router.put("/:productId", validateProductUpdate, async (req, res, next) => {
   try {
-    const { productId } = req.params;
-    const updatedProduct = await productService.update(productId, req.body);
+    const updatedProduct = await productService.update(req.product, req.body);
     if (updatedProduct.noChanges) {
       return res.status(200).json({
         success: true,
@@ -84,8 +81,7 @@ router.put("/:productId", validateProductUpdate, async (req, res, next) => {
 // Delete product by id
 router.delete("/:productId", async (req, res, next) => {
   try {
-    const { productId } = req.params;
-    const product = await productService.delete(productId);
+    const product = await productService.delete(req.product);
     return res.status(200).json({
       success: true,
       message: "Product deleted successfully",

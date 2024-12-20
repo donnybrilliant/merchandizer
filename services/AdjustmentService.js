@@ -103,9 +103,7 @@ class AdjustmentService {
   }
 
   // Update an existing adjustment
-  async update(adjustmentId, data) {
-    const adjustment = await this.getById(adjustmentId);
-
+  async update(adjustment, data) {
     if (isSameData(adjustment, data)) {
       return { noChanges: true, data: adjustment };
     }
@@ -131,8 +129,7 @@ class AdjustmentService {
   }
 
   // Delete an adjustment
-  async delete(adjustmentId) {
-    const adjustment = await this.getById(adjustmentId);
+  async delete(adjustment) {
     await adjustment.destroy();
     return adjustment;
   }

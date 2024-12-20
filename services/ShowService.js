@@ -98,9 +98,7 @@ class ShowService {
   }
 
   // Update show
-  async update(id, data) {
-    const show = await this.getById(id);
-
+  async update(show, data) {
     // Validate the new show date, if provided
     if (data.date) {
       const tour = await this.Tour.findByPk(show.Tour.id);
@@ -118,8 +116,7 @@ class ShowService {
   }
 
   // Delete show
-  async delete(id) {
-    const show = await this.getById(id);
+  async delete(show) {
     await show.destroy();
     return show;
   }

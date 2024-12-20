@@ -44,10 +44,7 @@ class ArtistService {
   }
 
   // Update artist
-  async update(id, data) {
-    // Check if the artist exists
-    const artist = await this.getById(id);
-
+  async update(artist, data) {
     // Check if the data is the same as the artist
     if (isSameData(artist, data)) {
       return { noChanges: true, data: artist };
@@ -60,9 +57,7 @@ class ArtistService {
   }
 
   // Delete artist
-  async delete(id) {
-    // Check if the artist exists
-    const artist = await this.getById(id);
+  async delete(artist) {
     await artist.destroy();
     return artist;
   }
