@@ -6,12 +6,12 @@ const showService = new ShowService(db);
 const inventoryRouter = require("./inventory");
 const adjustmentRouter = require("./adjustments");
 const { adminOnly, authorize } = require("../middleware/auth");
+const { validateAndFindShow } = require("../middleware/resourceValidation");
 const {
   validateShow,
   validateMultipleShows,
   validateShowUpdate,
 } = require("../middleware/validation");
-const { checkShowExists } = require("../middleware/resourceValidation");
 
 // Get all shows or search shows
 router.get("/", authorize("viewShows"), async (req, res, next) => {
@@ -144,7 +144,8 @@ router.delete("/:showId", authorize("manageShows"), async (req, res, next) => {
   }
 });
 
-router.use("/:showId/inventory", checkShowExists, inventoryRouter);
-router.use("/:showId/adjustments", checkShowExists, adjustmentRouter);
+router.param("showId", validateAndFindShow);
+router.use("/:showId/inventory", inventoryRouter);
+router.use("/:showId/adjustments", adjustmentRouter);
 
 module.exports = router;

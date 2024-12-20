@@ -5,14 +5,14 @@ const InventoryService = require("../services/InventoryService");
 const inventoryService = new InventoryService(db);
 const ShowService = require("../services/ShowService");
 const showService = new ShowService(db);
+const { authorize } = require("../middleware/auth");
+const { validateAndFindProduct } = require("../middleware/resourceValidation");
 const {
   validateSingleInventory,
   validateSingleInventoryUpdate,
   validateMultipleInventory,
   validateMultipleInventoryUpdate,
 } = require("../middleware/validation");
-const { authorize } = require("../middleware/auth");
-const { checkProductExists } = require("../middleware/resourceValidation");
 
 // Get inventory for a specific show
 router.get("/", authorize("viewInventory"), async (req, res, next) => {
@@ -193,5 +193,7 @@ router.delete(
     }
   }
 );
+
+router.param("productId", validateAndFindProduct);
 
 module.exports = router;

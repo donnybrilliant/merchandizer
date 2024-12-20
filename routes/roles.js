@@ -4,6 +4,7 @@ const db = require("../models");
 const RoleService = require("../services/RoleService");
 const roleService = new RoleService(db);
 const { authorize } = require("../middleware/auth");
+const { validateAndFindUser } = require("../middleware/resourceValidation");
 const {
   validateRole,
   validateRoleUpdate,
@@ -87,7 +88,6 @@ router.delete("/:userId", authorize("manageUsers"), async (req, res, next) => {
   }
 });
 
-  }
-);
+router.param("userId", validateAndFindUser);
 
 module.exports = router;

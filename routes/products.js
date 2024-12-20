@@ -5,6 +5,7 @@ const ProductService = require("../services/ProductService");
 const productService = new ProductService(db);
 const { multerUpload, uploadToS3, resizeImage } = require("../utils/upload");
 const { isAuth } = require("../middleware/auth");
+const { validateAndFindProduct } = require("../middleware/resourceValidation");
 const {
   validateProduct,
   validateProductUpdate,
@@ -132,5 +133,6 @@ router.put(
   }
 );
 
+router.param("productId", validateAndFindProduct);
 
 module.exports = router;

@@ -5,9 +5,12 @@ const AdjustmentService = require("../services/AdjustmentService");
 const adjustmentService = new AdjustmentService(db);
 const { authorize } = require("../middleware/auth");
 const {
+  validateAndFindAdjustment,
+  validateAndFindProduct,
+} = require("../middleware/resourceValidation");
+const {
   validateAdjustment,
   validateAdjustmentUpdate,
-  validateParam,
 } = require("../middleware/validation");
 
 // Get all adjustments for a show
@@ -152,5 +155,7 @@ router.delete(
   }
 );
 
+router.param("adjustmentId", validateAndFindAdjustment);
+router.param("productId", validateAndFindProduct);
 
 module.exports = router;
