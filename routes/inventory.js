@@ -10,7 +10,6 @@ const {
   validateSingleInventoryUpdate,
   validateMultipleInventory,
   validateMultipleInventoryUpdate,
-  validateParam,
 } = require("../middleware/validation");
 const { authorize } = require("../middleware/auth");
 const { checkProductExists } = require("../middleware/resourceValidation");
@@ -36,7 +35,6 @@ router.get("/", authorize("viewInventory"), async (req, res, next) => {
 // Get inventory for a specific show and product
 router.get(
   "/:productId",
-  checkProductExists,
   authorize("viewInventory"),
   async (req, res, next) => {
     try {
@@ -99,7 +97,6 @@ router.post("/copy", authorize("manageInventory"), async (req, res, next) => {
 // Add inventory item for a show
 router.post(
   "/:productId",
-  validateParam("productId"),
   authorize("manageInventory"),
   validateSingleInventory,
   async (req, res, next) => {
@@ -150,7 +147,6 @@ router.put(
 // Update inventory item for a show
 router.put(
   "/:productId",
-  checkProductExists,
   authorize("manageInventory"),
   validateSingleInventoryUpdate,
   async (req, res, next) => {
@@ -182,7 +178,6 @@ router.put(
 // Delete inventory item for a show
 router.delete(
   "/:productId",
-  checkProductExists,
   authorize("deleteInventory"),
   async (req, res, next) => {
     try {

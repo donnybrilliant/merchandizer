@@ -7,7 +7,6 @@ const { isAuth } = require("../middleware/auth");
 const {
   validateCategory,
   validateCategorySearch,
-  validateParam,
 } = require("../middleware/validation");
 
 router.use(isAuth);
@@ -32,19 +31,15 @@ router.get("/", validateCategorySearch, async (req, res, next) => {
 });
 
 // Get category by id
-router.get(
-  "/:categoryId",
-  validateParam("categoryId"),
-  async (req, res, next) => {
-    try {
-      const { categoryId } = req.params;
-      const category = await categoryService.getById(categoryId);
-      return res.status(200).json({ success: true, data: category });
-    } catch (err) {
-      next(err);
-    }
+router.get("/:categoryId", async (req, res, next) => {
+  try {
+    const { categoryId } = req.params;
+    const category = await categoryService.getById(categoryId);
+    return res.status(200).json({ success: true, data: category });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // Create new category
 router.post("/", validateCategory, async (req, res, next) => {
@@ -61,51 +56,42 @@ router.post("/", validateCategory, async (req, res, next) => {
 });
 
 // Update category by id
-router.put(
-  "/:categoryId",
-  validateParam("categoryId"),
-  validateCategory,
-  async (req, res, next) => {
-    try {
-      const { categoryId } = req.params;
-      const updatedCategory = await categoryService.update(
-        categoryId,
-        req.body
-      );
-      if (updatedCategory.noChanges) {
-        return res.status(200).json({
-          success: true,
-          message: "No changes made to category",
-          data: updatedCategory.data,
-        });
-      }
+router.put("/:categoryId", validateCategory, async (req, res, next) => {
+  try {
+    const { categoryId } = req.params;
+    const updatedCategory = await categoryService.update(categoryId, req.body);
+    if (updatedCategory.noChanges) {
       return res.status(200).json({
         success: true,
-        message: "Category updated successfully",
-        data: updatedCategory,
+        message: "No changes made to category",
+        data: updatedCategory.data,
       });
-    } catch (err) {
-      next(err);
     }
+    return res.status(200).json({
+      success: true,
+      message: "Category updated successfully",
+      data: updatedCategory,
+    });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // Delete category by id
-router.delete(
-  "/:categoryId",
-  validateParam("categoryId"),
-  async (req, res, next) => {
-    try {
-      const { categoryId } = req.params;
-      const category = await categoryService.delete(categoryId);
-      return res.status(200).json({
-        success: true,
-        message: "Category deleted successfully",
-        data: category,
-      });
-    } catch (err) {
-      next(err);
-    }
+router.delete("/:categoryId", async (req, res, next) => {
+  try {
+    const { categoryId } = req.params;
+    const category = await categoryService.delete(categoryId);
+    return res.status(200).json({
+      success: true,
+      message: "Category deleted successfully",
+      data: category,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
   }
 );
 

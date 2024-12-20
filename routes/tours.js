@@ -9,7 +9,6 @@ const { isAuth, authorize, adminOnly } = require("../middleware/auth");
 const {
   validateTour,
   validateTourUpdate,
-  validateParam,
 } = require("../middleware/validation");
 const { checkTourExists } = require("../middleware/resourceValidation");
 
@@ -50,20 +49,15 @@ router.get("/all", adminOnly, async (req, res, next) => {
 });
 
 // Get tour by id
-router.get(
-  "/:tourId",
-  validateParam("tourId"),
-  authorize("viewTour"),
-  async (req, res, next) => {
-    try {
-      const { tourId } = req.params;
-      const tour = await tourService.getById(tourId);
-      return res.status(200).json({ success: true, data: tour });
-    } catch (err) {
-      next(err);
-    }
+router.get("/:tourId", authorize("viewTour"), async (req, res, next) => {
+  try {
+    const { tourId } = req.params;
+    const tour = await tourService.getById(tourId);
+    return res.status(200).json({ success: true, data: tour });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // Create new tour
 router.post("/", validateTour, async (req, res, next) => {
@@ -82,7 +76,6 @@ router.post("/", validateTour, async (req, res, next) => {
 // Update tour by id
 router.put(
   "/:tourId",
-  validateParam("tourId"),
   authorize("manageTour"),
   validateTourUpdate,
   async (req, res, next) => {
@@ -108,24 +101,19 @@ router.put(
 );
 
 // Delete tour by id
-router.delete(
-  "/:tourId",
-  validateParam("tourId"),
-  authorize("manageTour"),
-  async (req, res, next) => {
-    try {
-      const { tourId } = req.params;
-      const tour = await tourService.delete(tourId);
-      return res.status(200).json({
-        success: true,
-        message: "Tour deleted successfully",
-        data: tour,
-      });
-    } catch (err) {
-      next(err);
-    }
+router.delete("/:tourId", authorize("manageTour"), async (req, res, next) => {
+  try {
+    const { tourId } = req.params;
+    const tour = await tourService.delete(tourId);
+    return res.status(200).json({
+      success: true,
+      message: "Tour deleted successfully",
+      data: tour,
+    });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 router.use("/:tourId/shows", checkTourExists, showsRouter);
 router.use("/:tourId/roles", checkTourExists, rolesRouter);
