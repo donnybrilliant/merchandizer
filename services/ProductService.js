@@ -71,10 +71,10 @@ class ProductService {
       throw createError(404, "Artist not found. Cannot create product");
 
     // Check if category exists
-    if (data.categoryId) {
+
       const category = await this.Category.findByPk(data.categoryId);
-      if (!category) throw createError(404, "Category not found");
-    }
+    if (!category)
+      throw createError(404, "Category not found. Cannot create product");
 
     return await this.Product.create(data);
   }

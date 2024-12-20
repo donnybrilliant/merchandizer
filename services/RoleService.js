@@ -121,7 +121,7 @@ class RoleService {
       where: { tourId, userId },
     });
     if (!userRoleTour) {
-      throw createError(400, "User not found in this tour");
+      throw createError(404, "User not found in this tour");
     }
     await userRoleTour.destroy();
     return userRoleTour;
