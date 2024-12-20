@@ -14,6 +14,10 @@ class ShowService {
         model: this.Artist,
         attributes: ["id", "name"],
       },
+      {
+        model: this.Tour,
+        attributes: ["id", "name"],
+      },
     ];
   }
 
@@ -21,6 +25,7 @@ class ShowService {
   async getAll() {
     return await this.Show.findAll({
       include: this.defaultInclude,
+      attributes: { exclude: ["tourId", "artistId"] },
     });
   }
 
@@ -45,6 +50,7 @@ class ShowService {
   async getById(id) {
     const show = await this.Show.findByPk(id, {
       include: this.defaultInclude,
+      attributes: { exclude: ["tourId", "artistId"] },
     });
     if (!show) throw createError(404, "Show not found");
     return show;
@@ -92,12 +98,10 @@ class ShowService {
   }
 
   // Update show
-  async update(id, data) {
-    const show = await this.getById(id);
-
+  async update(show, data) {
     // Validate the new show date, if provided
     if (data.date) {
-      const tour = await this.Tour.findByPk(show.tourId);
+      const tour = await this.Tour.findByPk(show.Tour.id);
 
       checkDateRange(data.date, tour.startDate, tour.endDate);
     }
@@ -112,8 +116,7 @@ class ShowService {
   }
 
   // Delete show
-  async delete(id) {
-    const show = await this.getById(id);
+  async delete(show) {
     await show.destroy();
     return show;
   }
@@ -121,7 +124,6 @@ class ShowService {
   // Find the previous show for the current show in the same tour
   async findPreviousShow(currentShowId) {
     const currentShow = await this.Show.findByPk(currentShowId);
-
     if (!currentShow) {
       throw createError(404, "Current show not found");
     }
@@ -137,9 +139,7 @@ class ShowService {
     });
 
     // Find the index of the current show
-    const showIndex = shows.findIndex(
-      (show) => show.id === Number(currentShowId)
-    );
+    const showIndex = shows.findIndex((show) => show.id === currentShowId);
 
     if (showIndex <= 0) {
       throw createError(404, "No previous show found for the tour");

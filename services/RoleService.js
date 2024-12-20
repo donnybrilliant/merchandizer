@@ -14,15 +14,18 @@ class RoleService {
   }
 
   // Add user to tour
-  async addUserToTour(tourId, userId, role) {
-    // Check if the user to be added exists
-    const user = await this.User.findByPk(userId);
-    if (!user) throw createError(404, "User not found");
+  async addUserToTour(tourId, userId, role, email) {
+    let user;
 
-    // Validate the role
-    const validRoles = ["manager", "sales", "viewer"];
-    if (!validRoles.includes(role)) {
-      throw createError(400, "Invalid role");
+    // If userId is not provided, find the user by email
+    if (!userId && email) {
+      user = await this.User.findOne({ where: { email } });
+      if (!user) throw createError(404, "User not found by email");
+      userId = user.id; // Set userId for further operations
+    } else {
+      // Check if the user to be added exists
+      user = await this.User.findByPk(userId);
+      if (!user) throw createError(404, "User not found by ID");
     }
 
     // Check if the user is already assigned a role for this tour
@@ -54,32 +57,19 @@ class RoleService {
     });
 
     return userRoles;
-    // Map the response to include user details and role
-    /*   return userRoles.map((userRole) => ({
-      id: userRole.User.id,
-      firstName: userRole.User.firstName,
-      lastName: userRole.User.lastName,
-      email: userRole.User.email,
-      role: userRole.role, // Role from UserRoleTour
-    })); */
   }
 
   // Update user role for tour
   async updateUserRole(tourId, userId, newRole) {
-    // Validate the new role
-    const validRoles = ["manager", "sales", "viewer"];
-    if (!validRoles.includes(newRole)) {
-      throw createError(400, "Invalid role");
-    }
-
     // Check if the user to be added exists
     const user = await this.User.findByPk(userId);
     if (!user) throw createError(404, "User not found");
+
     // Find the tour
     const tour = await this.Tour.findByPk(tourId);
 
     // Prevent changing roles of the first manager
-    if (tour.createdBy !== userId) {
+    if (tour.createdBy === userId) {
       throw createError(
         400,
         "The first manager cannot be downgraded or updated"
@@ -106,28 +96,24 @@ class RoleService {
 
   // Delete user from tour
   async deleteUserFromTour(tourId, userId) {
-    // Find the tour
     const tour = await this.Tour.findByPk(tourId);
 
     // Prevent deleting the first manager
-    if (tour.createdBy !== userId) {
+    if (tour.createdBy === userId) {
       throw createError(
         400,
         "The first manager cannot be removed from the tour"
       );
     }
 
-    // Find and delete the UserRoleTour entry
-    const userRoleTour = await this.UserRoleTour.destroy({
+    // Find the UserRoleTour entry
+    const userRoleTour = await this.UserRoleTour.findOne({
       where: { tourId, userId },
     });
-
     if (!userRoleTour) {
-      throw createError(400, "User not found in this tour");
+      throw createError(404, "User not found in this tour");
     }
-
     await userRoleTour.destroy();
-
     return userRoleTour;
   }
 }
