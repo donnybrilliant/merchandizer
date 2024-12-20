@@ -6,11 +6,11 @@ const tourService = new TourService(db);
 const showsRouter = require("./shows");
 const rolesRouter = require("./roles");
 const { isAuth, authorize, adminOnly } = require("../middleware/auth");
+const { validateAndFindTour } = require("../middleware/resourceValidation");
 const {
   validateTour,
   validateTourUpdate,
 } = require("../middleware/validation");
-const { checkTourExists } = require("../middleware/resourceValidation");
 
 router.use(isAuth);
 
@@ -115,7 +115,8 @@ router.delete("/:tourId", authorize("manageTour"), async (req, res, next) => {
   }
 });
 
-router.use("/:tourId/shows", checkTourExists, showsRouter);
-router.use("/:tourId/roles", checkTourExists, rolesRouter);
+router.param("tourId", validateAndFindTour);
+router.use("/:tourId/shows", showsRouter);
+router.use("/:tourId/roles", rolesRouter);
 
 module.exports = router;

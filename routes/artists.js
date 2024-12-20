@@ -4,6 +4,7 @@ const db = require("../models");
 const ArtistService = require("../services/ArtistService");
 const artistService = new ArtistService(db);
 const { isAuth } = require("../middleware/auth");
+const { validateAndFindArtist } = require("../middleware/resourceValidation");
 const {
   validateArtist,
   validateArtistSearch,
@@ -92,7 +93,6 @@ router.delete("/:artistId", async (req, res, next) => {
   }
 });
 
-  }
-);
+router.param("artistId", validateAndFindArtist);
 
 module.exports = router;

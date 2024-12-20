@@ -4,6 +4,7 @@ const db = require("../models");
 const CategoryService = require("../services/CategoryService");
 const categoryService = new CategoryService(db);
 const { isAuth } = require("../middleware/auth");
+const { validateAndFindCategory } = require("../middleware/resourceValidation");
 const {
   validateCategory,
   validateCategorySearch,
@@ -92,7 +93,6 @@ router.delete("/:categoryId", async (req, res, next) => {
   }
 });
 
-  }
-);
+router.param("categoryId", validateAndFindCategory);
 
 module.exports = router;

@@ -5,9 +5,9 @@ const StatsService = require("../services/StatsService");
 const statsService = new StatsService(db);
 const { isAuth, authorize } = require("../middleware/auth");
 const {
-  checkTourExists,
-  checkShowExists,
-  checkProductExists,
+  validateAndFindTour,
+  validateAndFindShow,
+  validateAndFindProduct,
 } = require("../middleware/resourceValidation");
 
 router.use(isAuth);
@@ -56,4 +56,7 @@ router.get(
   }
 );
 
+router.param("tourId", validateAndFindTour);
+router.param("showId", validateAndFindShow);
+router.param("productId", validateAndFindProduct);
 module.exports = router;
