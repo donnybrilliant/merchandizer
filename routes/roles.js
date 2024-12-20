@@ -4,9 +4,12 @@ const db = require("../models");
 const RoleService = require("../services/RoleService");
 const roleService = new RoleService(db);
 const { authorize } = require("../middleware/auth");
-const { validateParam } = require("../middleware/validation");
+const {
+  validateRole,
+  validateRoleUpdate,
+} = require("../middleware/validation");
 
-router.post("/", authorize("manageUsers"), async (req, res, next) => {
+  validateRole,
   try {
     const { tourId } = req.params;
     const { userId, role } = req.body;
@@ -37,6 +40,7 @@ router.put(
   "/:userId",
   validateParam("userId"),
   authorize("manageUsers"),
+  validateRoleUpdate,
   async (req, res, next) => {
     try {
       const { tourId, userId } = req.params;
