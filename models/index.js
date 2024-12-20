@@ -9,6 +9,7 @@ const connection = {
   port: process.env.DATABASE_PORT,
   host: process.env.HOST,
   dialect: process.env.DIALECT,
+  dialectOptions: { decimalNumbers: true },
   define: {
     timestamps: false,
   },
