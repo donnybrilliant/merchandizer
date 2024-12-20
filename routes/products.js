@@ -5,12 +5,12 @@ const ProductService = require("../services/ProductService");
 const productService = new ProductService(db);
 const { multerUpload, uploadToS3, resizeImage } = require("../utils/upload");
 const { isAuth } = require("../middleware/auth");
+const { validateAndFindProduct } = require("../middleware/resourceValidation");
 const {
   validateProduct,
   validateProductUpdate,
   validateProductSearch,
   validateImageUpload,
-  validateParam,
 } = require("../middleware/validation");
 
 router.use(isAuth);
@@ -35,19 +35,13 @@ router.get("/", validateProductSearch, async (req, res, next) => {
 });
 
 // Get product by id
-router.get(
-  "/:productId",
-  validateParam("productId"),
-  async (req, res, next) => {
-    try {
-      const { productId } = req.params;
-      const product = await productService.getById(productId);
-      return res.status(200).json({ success: true, data: product });
-    } catch (err) {
-      next(err);
-    }
+router.get("/:productId", async (req, res, next) => {
+  try {
+    return res.status(200).json({ success: true, data: req.product });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // Create new product
 router.post("/", validateProduct, async (req, res, next) => {
@@ -64,55 +58,43 @@ router.post("/", validateProduct, async (req, res, next) => {
 });
 
 // Update product by id
-router.put(
-  "/:productId",
-  validateParam("productId"),
-  validateProductUpdate,
-  async (req, res, next) => {
-    try {
-      const { productId } = req.params;
-      const updatedProduct = await productService.update(productId, req.body);
-      if (updatedProduct.noChanges) {
-        return res.status(200).json({
-          success: true,
-          message: "No changes made to product",
-          data: updatedProduct.data,
-        });
-      }
+router.put("/:productId", validateProductUpdate, async (req, res, next) => {
+  try {
+    const updatedProduct = await productService.update(req.product, req.body);
+    if (updatedProduct.noChanges) {
       return res.status(200).json({
         success: true,
-        message: "Product updated successfully",
-        data: updatedProduct,
+        message: "No changes made to product",
+        data: updatedProduct.data,
       });
-    } catch (err) {
-      next(err);
     }
+    return res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+      data: updatedProduct,
+    });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // Delete product by id
-router.delete(
-  "/:productId",
-  validateParam("productId"),
-  async (req, res, next) => {
-    try {
-      const { productId } = req.params;
-      const product = await productService.delete(productId);
-      return res.status(200).json({
-        success: true,
-        message: "Product deleted successfully",
-        data: product,
-      });
-    } catch (err) {
-      next(err);
-    }
+router.delete("/:productId", async (req, res, next) => {
+  try {
+    const product = await productService.delete(req.product);
+    return res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+      data: product,
+    });
+  } catch (err) {
+    next(err);
   }
-);
+});
 
 // Update product image
 router.put(
   "/:productId/image",
-  validateParam("productId"),
   multerUpload.single("image"),
   validateImageUpload("image"),
   async (req, res, next) => {
@@ -146,5 +128,7 @@ router.put(
     }
   }
 );
+
+router.param("productId", validateAndFindProduct);
 
 module.exports = router;

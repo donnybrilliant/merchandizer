@@ -5,9 +5,12 @@ const AdjustmentService = require("../services/AdjustmentService");
 const adjustmentService = new AdjustmentService(db);
 const { authorize } = require("../middleware/auth");
 const {
+  validateAndFindAdjustment,
+  validateAndFindProduct,
+} = require("../middleware/resourceValidation");
+const {
   validateAdjustment,
   validateAdjustmentUpdate,
-  validateParam,
 } = require("../middleware/validation");
 
 // Get all adjustments for a show
@@ -34,7 +37,6 @@ router.get("/", authorize("viewAdjustments"), async (req, res, next) => {
 // Get adjustments for a product
 router.get(
   "/product/:productId",
-  validateParam("productId"),
   authorize("viewAdjustments"),
   async (req, res, next) => {
     try {
@@ -62,15 +64,12 @@ router.get(
 // Get a single adjustment by adjustmentId
 router.get(
   "/:adjustmentId",
-  validateParam("adjustmentId"),
   authorize("viewAdjustments"),
   async (req, res, next) => {
     try {
-      const { adjustmentId } = req.params;
-      const adjustment = await adjustmentService.getById(adjustmentId);
       return res.status(200).json({
         success: true,
-        data: adjustment,
+        data: req.adjustment,
       });
     } catch (err) {
       next(err);
@@ -107,14 +106,12 @@ router.post(
 // Update adjustment
 router.put(
   "/:adjustmentId",
-  validateParam("adjustmentId"),
   authorize("manageAdjustments"),
   validateAdjustmentUpdate,
   async (req, res, next) => {
     try {
-      const { adjustmentId } = req.params;
       const updatedAdjustment = await adjustmentService.update(
-        adjustmentId,
+        req.adjustment,
         req.body
       );
       if (updatedAdjustment.noChanges) {
@@ -139,12 +136,10 @@ router.put(
 // Delete adjustment
 router.delete(
   "/:adjustmentId",
-  validateParam("adjustmentId"),
   authorize("manageAdjustments"),
   async (req, res, next) => {
     try {
-      const { adjustmentId } = req.params;
-      const adjustment = await adjustmentService.delete(adjustmentId);
+      const adjustment = await adjustmentService.delete(req.adjustment);
       return res.status(200).json({
         success: true,
         message: "Adjustment deleted successfully",
@@ -155,5 +150,8 @@ router.delete(
     }
   }
 );
+
+router.param("adjustmentId", validateAndFindAdjustment);
+router.param("productId", validateAndFindProduct);
 
 module.exports = router;

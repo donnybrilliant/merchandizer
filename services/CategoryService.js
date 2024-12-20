@@ -54,10 +54,7 @@ class CategoryService {
   }
 
   // Update category
-  async update(id, data) {
-    // Check if category exists
-    const category = await this.getById(id);
-
+  async update(category, data) {
     // Check if the data is the same as the category
     if (isSameData(category, data)) {
       return { noChanges: true, data: category };
@@ -70,9 +67,7 @@ class CategoryService {
   }
 
   // Delete category
-  async delete(id) {
-    // Check if category exists
-    const category = await this.getById(id);
+  async delete(category) {
     await category.destroy();
     return category;
   }
