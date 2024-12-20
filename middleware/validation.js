@@ -510,6 +510,44 @@ const validateAdjustmentUpdate = [
   handleValidationErrors,
 ];
 
+// Valid tour roles
+const validRoles = ["manager", "sales", "viewer"];
+
+// Role validation
+const validateRole = [
+  body("role")
+    .notEmpty()
+    .withMessage("Role is required")
+    .isIn(validRoles)
+    .withMessage(`Role must be one of: ${validRoles.join(", ")}`),
+  body().custom((value, { req }) => {
+    const { userId, email } = req.body;
+    if ((userId && email) || (!userId && !email)) {
+      throw new Error("Either userId or email must be provided");
+    }
+    return true;
+  }),
+  body("email")
+    .optional()
+    .isEmail()
+    .withMessage("Email must be a valid email address"),
+  body("userId")
+    .optional()
+    .isInt()
+    .withMessage("User ID must be a valid integer"),
+  handleValidationErrors,
+];
+
+// Update role validation
+const validateRoleUpdate = [
+  body("role")
+    .notEmpty()
+    .withMessage("Role is required")
+    .isIn(validRoles)
+    .withMessage(`Role must be one of: ${validRoles.join(", ")}`),
+  handleValidationErrors,
+];
+
 // Search Shows Validation
 const validateShowSearch = [
   ...validateQueryParams(["city", "venue", "date", "country", "artist"]),
@@ -590,6 +628,8 @@ module.exports = {
   validateMultipleInventoryUpdate,
   validateAdjustment,
   validateAdjustmentUpdate,
+  validateRole,
+  validateRoleUpdate,
   validateCategorySearch,
   validateArtistSearch,
   validateProductSearch,
