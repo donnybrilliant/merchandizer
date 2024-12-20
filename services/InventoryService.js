@@ -42,15 +42,27 @@ class InventoryService {
   async getAllByShow(showId) {
     return await this.ShowInventory.findAll({
       where: { showId },
-      include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
+      attributes: { exclude: ["productId", "showId"] },
+      include: [
+        {
+          model: this.Product,
+          attributes: ["id", "name", "price", "size", "color"],
+        },
+      ],
     });
   }
 
-  // Get inventory item by show and product ID - correct name?
+  // Get inventory item by show and product ID
   async getById(showId, productId) {
     const inventory = await this.ShowInventory.findOne({
       where: { showId, productId },
-      include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
+      attributes: { exclude: ["productId", "showId"] },
+      include: [
+        {
+          model: this.Product,
+          attributes: ["id", "name", "price", "size", "color"],
+        },
+      ],
     });
 
     if (!inventory) {
@@ -145,9 +157,15 @@ class InventoryService {
   }
 
   // Copy inventory from the previous show
-  async copyInventoryFromPreviousShow(currentShowId, previousShow) {
+  async copyInventoryFromPreviousShow(currentShowId, previousShowId) {
     const previousInventories = await this.ShowInventory.findAll({
-      where: { showId: previousShow.id },
+      where: { showId: previousShowId },
+      include: [
+        {
+          model: this.Product,
+          attributes: ["id", "name", "price", "size", "color"],
+        },
+      ],
     });
 
     if (!previousInventories.length) {
@@ -160,12 +178,16 @@ class InventoryService {
     const unchanged = [];
 
     for (const inventory of previousInventories) {
-      const { productId, endInventory } = inventory;
+      const { productId, endInventory, Product } = inventory;
 
       if (existingProductIds.includes(productId)) {
         unchanged.push({
           message: "Inventory already exists",
-          productId,
+          data: {
+            productId,
+            startInventory: endInventory,
+            Product,
+          },
         });
         continue;
       }
@@ -197,8 +219,11 @@ class InventoryService {
 
       updated.push({
         message: "Inventory copied",
-        productId,
-        startInventory,
+        data: {
+          productId,
+          startInventory,
+          Product,
+        },
       });
     }
 
