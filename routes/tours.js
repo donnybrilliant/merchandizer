@@ -51,9 +51,7 @@ router.get("/all", adminOnly, async (req, res, next) => {
 // Get tour by id
 router.get("/:tourId", authorize("viewTour"), async (req, res, next) => {
   try {
-    const { tourId } = req.params;
-    const tour = await tourService.getById(tourId);
-    return res.status(200).json({ success: true, data: tour });
+    return res.status(200).json({ success: true, data: req.tour });
   } catch (err) {
     next(err);
   }
@@ -80,8 +78,7 @@ router.put(
   validateTourUpdate,
   async (req, res, next) => {
     try {
-      const { tourId } = req.params;
-      const updatedTour = await tourService.update(tourId, req.body);
+      const updatedTour = await tourService.update(req.tour, req.body);
       if (updatedTour.noChanges) {
         return res.status(200).json({
           success: true,
@@ -103,8 +100,7 @@ router.put(
 // Delete tour by id
 router.delete("/:tourId", authorize("manageTour"), async (req, res, next) => {
   try {
-    const { tourId } = req.params;
-    const tour = await tourService.delete(tourId);
+    const tour = await tourService.delete(req.tour);
     return res.status(200).json({
       success: true,
       message: "Tour deleted successfully",

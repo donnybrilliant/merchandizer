@@ -54,9 +54,7 @@ router.get("/all", adminOnly, async (req, res, next) => {
 // Get show by id
 router.get("/:showId", authorize("viewShows"), async (req, res, next) => {
   try {
-    const { showId } = req.params;
-    const show = await showService.getById(showId);
-    return res.status(200).json({ success: true, data: show });
+    return res.status(200).json({ success: true, data: req.show });
   } catch (err) {
     next(err);
   }
@@ -109,8 +107,7 @@ router.put(
   validateShowUpdate,
   async (req, res, next) => {
     try {
-      const { showId } = req.params;
-      const updatedShow = await showService.update(showId, req.body);
+      const updatedShow = await showService.update(req.show, req.body);
       if (updatedShow.noChanges) {
         return res.status(200).json({
           success: true,
@@ -132,8 +129,7 @@ router.put(
 // Delete show by id
 router.delete("/:showId", authorize("manageShows"), async (req, res, next) => {
   try {
-    const { showId } = req.params;
-    const show = await showService.delete(showId);
+    const show = await showService.delete(req.show);
     return res.status(200).json({
       success: true,
       message: "Show deleted successfully",

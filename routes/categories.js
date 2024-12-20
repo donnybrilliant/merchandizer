@@ -34,9 +34,7 @@ router.get("/", validateCategorySearch, async (req, res, next) => {
 // Get category by id
 router.get("/:categoryId", async (req, res, next) => {
   try {
-    const { categoryId } = req.params;
-    const category = await categoryService.getById(categoryId);
-    return res.status(200).json({ success: true, data: category });
+    return res.status(200).json({ success: true, data: req.category });
   } catch (err) {
     next(err);
   }
@@ -59,8 +57,10 @@ router.post("/", validateCategory, async (req, res, next) => {
 // Update category by id
 router.put("/:categoryId", validateCategory, async (req, res, next) => {
   try {
-    const { categoryId } = req.params;
-    const updatedCategory = await categoryService.update(categoryId, req.body);
+    const updatedCategory = await categoryService.update(
+      req.category,
+      req.body
+    );
     if (updatedCategory.noChanges) {
       return res.status(200).json({
         success: true,
@@ -81,8 +81,7 @@ router.put("/:categoryId", validateCategory, async (req, res, next) => {
 // Delete category by id
 router.delete("/:categoryId", async (req, res, next) => {
   try {
-    const { categoryId } = req.params;
-    const category = await categoryService.delete(categoryId);
+    const category = await categoryService.delete(req.category);
     return res.status(200).json({
       success: true,
       message: "Category deleted successfully",

@@ -67,11 +67,9 @@ router.get(
   authorize("viewAdjustments"),
   async (req, res, next) => {
     try {
-      const { adjustmentId } = req.params;
-      const adjustment = await adjustmentService.getById(adjustmentId);
       return res.status(200).json({
         success: true,
-        data: adjustment,
+        data: req.adjustment,
       });
     } catch (err) {
       next(err);
@@ -112,9 +110,8 @@ router.put(
   validateAdjustmentUpdate,
   async (req, res, next) => {
     try {
-      const { adjustmentId } = req.params;
       const updatedAdjustment = await adjustmentService.update(
-        adjustmentId,
+        req.adjustment,
         req.body
       );
       if (updatedAdjustment.noChanges) {
@@ -142,8 +139,7 @@ router.delete(
   authorize("manageAdjustments"),
   async (req, res, next) => {
     try {
-      const { adjustmentId } = req.params;
-      const adjustment = await adjustmentService.delete(adjustmentId);
+      const adjustment = await adjustmentService.delete(req.adjustment);
       return res.status(200).json({
         success: true,
         message: "Adjustment deleted successfully",
