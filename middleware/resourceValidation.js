@@ -128,22 +128,6 @@ async function validateAndFindCategory(req, res, next, val) {
   }
 }
 
-async function validateAndFindInventory(req, res, next, val) {
-  const inventoryId = parseInt(val, 10);
-  if (isNaN(inventoryId) || inventoryId < 1) {
-    return next(createError(400, "inventoryId must be a valid integer"));
-  }
-
-  try {
-    const inventory = await inventoryService.getById(inventoryId);
-    req.params.inventoryId = inventoryId;
-    req.inventory = inventory;
-    next();
-  } catch (err) {
-    next(err);
-  }
-}
-
 module.exports = {
   validateAndFindTour,
   validateAndFindShow,
@@ -152,5 +136,4 @@ module.exports = {
   validateAndFindUser,
   validateAndFindAdjustment,
   validateAndFindCategory,
-  validateAndFindInventory,
 };
