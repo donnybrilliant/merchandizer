@@ -14,15 +14,18 @@ class RoleService {
   }
 
   // Add user to tour
-  async addUserToTour(tourId, userId, role) {
-    // Check if the user to be added exists
-    const user = await this.User.findByPk(userId);
-    if (!user) throw createError(404, "User not found");
+  async addUserToTour(tourId, userId, role, email) {
+    let user;
 
-    // Validate the role
-    const validRoles = ["manager", "sales", "viewer"];
-    if (!validRoles.includes(role)) {
-      throw createError(400, "Invalid role");
+    // If userId is not provided, find the user by email
+    if (!userId && email) {
+      user = await this.User.findOne({ where: { email } });
+      if (!user) throw createError(404, "User not found by email");
+      userId = user.id; // Set userId for further operations
+    } else {
+      // Check if the user to be added exists
+      user = await this.User.findByPk(userId);
+      if (!user) throw createError(404, "User not found by ID");
     }
 
     // Check if the user is already assigned a role for this tour
@@ -54,27 +57,14 @@ class RoleService {
     });
 
     return userRoles;
-    // Map the response to include user details and role
-    /*   return userRoles.map((userRole) => ({
-      id: userRole.User.id,
-      firstName: userRole.User.firstName,
-      lastName: userRole.User.lastName,
-      email: userRole.User.email,
-      role: userRole.role, // Role from UserRoleTour
-    })); */
   }
 
   // Update user role for tour
   async updateUserRole(tourId, userId, newRole) {
-    // Validate the new role
-    const validRoles = ["manager", "sales", "viewer"];
-    if (!validRoles.includes(newRole)) {
-      throw createError(400, "Invalid role");
-    }
-
     // Check if the user to be added exists
     const user = await this.User.findByPk(userId);
     if (!user) throw createError(404, "User not found");
+
     // Find the tour
     const tour = await this.Tour.findByPk(tourId);
 
