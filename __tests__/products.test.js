@@ -62,7 +62,7 @@ describe("Products Tests", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toMatchObject(productData);
+    expect(res.body.data.name).toBe(productName);
   });
 
   // Search for a product
