@@ -8,21 +8,32 @@ class TourService {
     this.UserRoleTour = db.UserRoleTour;
     this.User = db.User;
     this.Show = db.Show;
+
+    // Define default includes and excludes
+    this.defaultInclude = [
+      { model: this.Artist },
+      {
+        model: this.Show,
+        attributes: ["id", "date", "venue", "city", "country"],
+      },
+    ];
+    this.defaultExclude = ["artistId"];
   }
 
   // Get all tours
   async getAll() {
     return await this.Tour.findAll({
-      include: [{ model: this.Artist, attributes: ["id", "name"] }],
-      attributes: { exclude: ["artistId"] },
+      attributes: { exclude: this.defaultExclude },
+      include: this.defaultInclude,
     });
   }
 
   // Get tours for user
   async getAllForUser(userId) {
     return await this.Tour.findAll({
+      attributes: { exclude: [...this.defaultExclude, "createdBy"] },
       include: [
-        { model: this.Artist, attributes: ["id", "name"] },
+        ...this.defaultInclude,
         {
           model: this.User,
           attributes: [],
@@ -32,10 +43,6 @@ class TourService {
           where: { id: userId },
           required: true,
         },
-        {
-          model: this.Show,
-          attributes: ["id", "date", "venue", "city", "country"],
-        },
       ],
     });
   }
@@ -44,14 +51,8 @@ class TourService {
   async getById(id) {
     // Check if tour exists
     const tour = await this.Tour.findByPk(id, {
-      attributes: ["id", "name", "startDate", "endDate"],
-      include: [
-        { model: this.Artist, attributes: ["id", "name"] },
-        {
-          model: this.Show,
-          attributes: ["id", "date", "venue", "city", "country"],
-        },
-      ],
+      attributes: { exclude: [...this.defaultExclude, "createdBy"] },
+      include: this.defaultInclude,
     });
     if (!tour) throw createError(404, "Tour not found");
     return tour;

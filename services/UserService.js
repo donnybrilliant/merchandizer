@@ -4,12 +4,13 @@ const createError = require("http-errors");
 class UserService {
   constructor(db) {
     this.User = db.User;
+    this.defaultExclude = ["encryptedPassword", "salt"];
   }
 
   // Get user by id
   async getById(id) {
     const user = await this.User.findByPk(id, {
-      attributes: { exclude: ["encryptedPassword", "salt", "role"] },
+      attributes: { exclude: [...this.defaultExclude, "role"] },
     });
     if (!user) throw createError(404, "User not found");
     return user;
@@ -18,7 +19,7 @@ class UserService {
   // Get all users
   async getAll() {
     return await this.User.findAll({
-      attributes: { exclude: ["encryptedPassword", "salt"] },
+      attributes: { exclude: this.defaultExclude, include: ["role"] },
     });
   }
 
