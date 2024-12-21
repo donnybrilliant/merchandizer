@@ -9,17 +9,16 @@ class ProductService {
     this.Artist = db.Artist;
     this.ShowInventory = db.ShowInventory;
 
-    // Default includes
+    // Default includes and excludes
     this.defaultInclude = [
       {
         model: this.Category,
-        attributes: ["id", "name"],
       },
       {
         model: this.Artist,
-        attributes: ["id", "name"],
       },
     ];
+    this.defaultExclude = ["artistId", "categoryId"];
   }
 
   // Find all products or search with query
@@ -52,6 +51,7 @@ class ProductService {
     return await this.Product.findAll({
       where: whereConditions,
       include: this.defaultInclude,
+      attributes: { exclude: this.defaultExclude },
     });
   }
 
@@ -59,7 +59,7 @@ class ProductService {
   async getById(id) {
     const product = await this.Product.findByPk(id, {
       include: this.defaultInclude,
-      attributes: ["id", "name", "description", "color", "size", "price"],
+      attributes: { exclude: this.defaultExclude },
     });
     if (!product) throw createError(404, "Product not found");
     return product;
