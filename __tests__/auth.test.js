@@ -12,10 +12,12 @@ describe("Auth Tests", () => {
 
   // Cleanup after all tests
   afterAll(async () => {
-    await db.User.destroy({ where: { email: testUser.email } });
+    if (testUser.id) {
+      await db.User.destroy({ where: { id: testUser.id } });
+    }
   });
 
-  // Test Registration
+  // Create a user
   it("should register a user successfully", async () => {
     const res = await request(app).post("/register").send(testUser);
 
@@ -24,7 +26,7 @@ describe("Auth Tests", () => {
     expect(res.body.message).toBe("Account created successfully");
   });
 
-  // Failure Scenarios
+  // Duplicate email
   it("should fail registration with duplicate email", async () => {
     const res = await request(app).post("/register").send(testUser);
 
@@ -33,7 +35,7 @@ describe("Auth Tests", () => {
     expect(res.body.error).toBe("Email is already in use");
   });
 
-  // Test Login
+  // Login
   it("should login successfully and return a token", async () => {
     const res = await request(app).post("/login").send({
       email: testUser.email,
@@ -45,9 +47,10 @@ describe("Auth Tests", () => {
     expect(res.body.message).toBe("Login successful");
     expect(res.body.data).toHaveProperty("token");
     expect(res.body.data.email).toBe(testUser.email);
+    testUser.id = res.body.data.id;
   });
 
-  // Failure Scenarios
+  // Incorrect password
   it("should fail login with incorrect password", async () => {
     const res = await request(app).post("/login").send({
       email: testUser.email,
