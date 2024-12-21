@@ -8,6 +8,17 @@ class AdjustmentService {
     this.Product = db.Product;
     this.User = db.User;
     this.Show = db.Show;
+
+    this.defaultInclude = [
+      {
+        model: this.Category,
+        attributes: ["id", "name"],
+      },
+      {
+        model: this.Artist,
+        attributes: ["id", "name"],
+      },
+    ];
   }
 
   // Get ShowInventory for a product in a show
@@ -37,8 +48,12 @@ class AdjustmentService {
         {
           model: this.ShowInventory,
           where: { showId },
+          attributes: ["id", "showId"],
           include: [
-            { model: this.Product, attributes: ["id", "name", "price"] },
+            {
+              model: this.Product,
+              attributes: ["id", "name", "price"],
+            },
           ],
         },
         {
@@ -67,14 +82,26 @@ class AdjustmentService {
         {
           model: this.ShowInventory,
           where: { showId },
+          attributes: ["id", "showId"],
           include: [
-            { model: this.Product, attributes: ["id", "name", "price"] },
+            {
+              model: this.Product,
+              attributes: ["id", "name", "price"],
+            },
           ],
         },
         {
           model: this.User,
           attributes: ["id", "firstName", "lastName", "email"],
         },
+      ],
+      attributes: [
+        "id",
+        "quantity",
+        "reason",
+        "type",
+        "discountValue",
+        "discountType",
       ],
     });
   }
