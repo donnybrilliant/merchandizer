@@ -8,24 +8,24 @@ class ShowService {
     this.Artist = db.Artist;
     this.Tour = db.Tour;
 
-    // Default includes
+    // Default includes and excludes
     this.defaultInclude = [
       {
         model: this.Artist,
-        attributes: ["id", "name"],
       },
       {
         model: this.Tour,
         attributes: ["id", "name"],
       },
     ];
+    this.defaultExclude = ["artistId", "tourId"];
   }
 
   // Get all shows
   async getAll() {
     return await this.Show.findAll({
       include: this.defaultInclude,
-      attributes: { exclude: ["tourId", "artistId"] },
+      attributes: { exclude: this.defaultExclude },
     });
   }
 
@@ -43,6 +43,7 @@ class ShowService {
     return await this.Show.findAll({
       where: whereConditions,
       include: this.defaultInclude,
+      attributes: { exclude: this.defaultExclude },
     });
   }
 
@@ -50,7 +51,7 @@ class ShowService {
   async getById(id) {
     const show = await this.Show.findByPk(id, {
       include: this.defaultInclude,
-      attributes: { exclude: ["tourId", "artistId"] },
+      attributes: { exclude: this.defaultExclude },
     });
     if (!show) throw createError(404, "Show not found");
     return show;

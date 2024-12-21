@@ -8,6 +8,23 @@ class InventoryService {
     this.Product = db.Product;
     this.Adjustment = db.Adjustment;
     this.Show = db.Show;
+
+    // Default includes and excludes
+    this.defaultInclude = [
+      {
+        model: this.Product,
+        attributes: ["id", "name", "price", "size", "color"],
+      },
+      {
+        model: this.Show,
+        attributes: ["id", "tourId"],
+      },
+      {
+        model: this.Adjustment,
+        attributes: ["id", "quantity", "reason", "type"],
+      },
+    ];
+    this.defaultExclude = ["productId", "showId"];
   }
 
   // Check if inventory exists
@@ -42,13 +59,8 @@ class InventoryService {
   async getAllByShow(showId) {
     return await this.ShowInventory.findAll({
       where: { showId },
-      attributes: { exclude: ["productId", "showId"] },
-      include: [
-        {
-          model: this.Product,
-          attributes: ["id", "name", "price", "size", "color"],
-        },
-      ],
+      attributes: { exclude: this.defaultExclude },
+      include: this.defaultInclude,
     });
   }
 
@@ -56,13 +68,8 @@ class InventoryService {
   async getById(showId, productId) {
     const inventory = await this.ShowInventory.findOne({
       where: { showId, productId },
-      attributes: { exclude: ["productId", "showId"] },
-      include: [
-        {
-          model: this.Product,
-          attributes: ["id", "name", "price", "size", "color"],
-        },
-      ],
+      attributes: { exclude: this.defaultExclude },
+      include: this.defaultInclude,
     });
 
     if (!inventory) {

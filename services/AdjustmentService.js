@@ -9,16 +9,28 @@ class AdjustmentService {
     this.User = db.User;
     this.Show = db.Show;
 
+    // Default includes and excludes
     this.defaultInclude = [
       {
-        model: this.Category,
-        attributes: ["id", "name"],
+        model: this.ShowInventory,
+        attributes: ["id"],
+        include: [
+          {
+            model: this.Product,
+            attributes: ["id", "name", "price", "size", "color"],
+          },
+          {
+            model: this.Show,
+            attributes: ["id", "tourId"],
+          },
+        ],
       },
       {
-        model: this.Artist,
-        attributes: ["id", "name"],
+        model: this.User,
+        attributes: ["id", "firstName", "lastName", "email"],
       },
     ];
+    this.defaultExclude = ["showInventoryId", "userId"];
   }
 
   // Get ShowInventory for a product in a show
@@ -44,31 +56,11 @@ class AdjustmentService {
   // Get all adjustments for a show
   async getAllByShow(showId) {
     return await this.Adjustment.findAll({
-      include: [
-        {
-          model: this.ShowInventory,
-          where: { showId },
-          attributes: ["id", "showId"],
-          include: [
-            {
-              model: this.Product,
-              attributes: ["id", "name", "price"],
-            },
-          ],
-        },
-        {
-          model: this.User,
-          attributes: ["id", "firstName", "lastName", "email"],
-        },
-      ],
-      attributes: [
-        "id",
-        "quantity",
-        "reason",
-        "type",
-        "discountValue",
-        "discountType",
-      ],
+      include: this.defaultInclude,
+      attributes: { exclude: this.defaultExclude },
+      where: {
+        "$ShowInventory.showId$": showId,
+      },
     });
   }
 
@@ -78,37 +70,17 @@ class AdjustmentService {
 
     return await this.Adjustment.findAll({
       where: { showInventoryId: showInventory.id },
-      include: [
-        {
-          model: this.ShowInventory,
-          where: { showId },
-          attributes: ["id", "showId"],
-          include: [
-            {
-              model: this.Product,
-              attributes: ["id", "name", "price"],
-            },
-          ],
-        },
-        {
-          model: this.User,
-          attributes: ["id", "firstName", "lastName", "email"],
-        },
-      ],
-      attributes: [
-        "id",
-        "quantity",
-        "reason",
-        "type",
-        "discountValue",
-        "discountType",
-      ],
+      include: this.defaultInclude,
+      attributes: { exclude: this.defaultExclude },
     });
   }
 
   // Get adjustment by ID
   async getById(adjustmentId) {
-    const adjustment = await this.Adjustment.findByPk(adjustmentId);
+    const adjustment = await this.Adjustment.findByPk(adjustmentId, {
+      include: this.defaultInclude,
+      attributes: { exclude: this.defaultExclude },
+    });
     if (!adjustment) throw createError(404, "Adjustment not found");
     return adjustment;
   }
