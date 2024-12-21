@@ -99,6 +99,23 @@ class ShowService {
 
   // Update show
   async update(show, data) {
+    // Check if artistId or tourId is changing
+    const changingArtist = data.artistId && data.artistId !== show.artistId;
+    const changingTour = data.tourId && data.tourId !== show.tourId;
+
+    if (changingArtist || changingTour) {
+      // Count show inventories
+      const inventoryCount = await this.ShowInventory.count({
+        where: { showId: show.id },
+      });
+      if (inventoryCount > 0) {
+        throw createError(
+          400,
+          "Cannot update artistId or tourId for a show that has existing inventory"
+        );
+      }
+    }
+
     // Validate the new show date, if provided
     if (data.date) {
       const tour = await this.Tour.findByPk(show.Tour.id);

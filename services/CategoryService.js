@@ -55,6 +55,17 @@ class CategoryService {
 
   // Update category
   async update(category, data) {
+    // Check if category is in use
+    const productCount = await this.Product.count({
+      where: { categoryId: category.id },
+    });
+    if (productCount > 0) {
+      throw createError(
+        400,
+        "Category cannot be updated as it is referenced by products"
+      );
+    }
+
     // Check if the data is the same as the category
     if (isSameData(category, data)) {
       return { noChanges: true, data: category };

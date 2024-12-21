@@ -25,13 +25,11 @@ module.exports = (sequelize, Sequelize) => {
   Product.associate = function (models) {
     Product.belongsTo(models.Category, {
       foreignKey: "categoryId",
-      allowNull: true,
-      //as: "category",
+      allowNull: false,
     });
     Product.belongsTo(models.Artist, {
       foreignKey: {
         name: "artistId",
-        //as: "artist",
         allowNull: false,
       },
     });
