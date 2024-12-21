@@ -7,6 +7,7 @@ class ShowService {
     this.Show = db.Show;
     this.Artist = db.Artist;
     this.Tour = db.Tour;
+    this.ShowInventory = db.ShowInventory;
 
     // Default includes and excludes
     this.defaultInclude = [
@@ -19,6 +20,7 @@ class ShowService {
       },
     ];
     this.defaultExclude = ["artistId", "tourId"];
+    this.defaultOrder = [["date", "ASC"]];
   }
 
   // Get all shows
@@ -44,6 +46,7 @@ class ShowService {
       where: whereConditions,
       include: this.defaultInclude,
       attributes: { exclude: this.defaultExclude },
+      order: this.defaultOrder,
     });
   }
 

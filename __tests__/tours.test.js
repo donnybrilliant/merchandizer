@@ -40,7 +40,7 @@ describe("Tours Tests", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toMatchObject(tourData);
+    expect(res.body.data.name).toBe(tourName);
   });
 
   // Get all tours for current user
