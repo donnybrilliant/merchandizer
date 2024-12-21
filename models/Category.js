@@ -10,6 +10,8 @@ module.exports = (sequelize, Sequelize) => {
   Category.associate = function (models) {
     Category.hasMany(models.Product, {
       foreignKey: "categoryId",
+      allowNull: false,
+      onDelete: "RESTRICT",
     });
   };
 
