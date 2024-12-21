@@ -5,6 +5,7 @@ const { isSameData } = require("../utils/checks");
 class CategoryService {
   constructor(db) {
     this.Category = db.Category;
+    this.Product = db.Product;
   }
 
   // Find all categories or search by name
