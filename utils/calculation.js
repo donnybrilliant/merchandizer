@@ -1,44 +1,42 @@
-const calculateAdjustments = (adjustments) => {
-  const totals = adjustments.reduce(
-    (acc, adj) => {
-      if (adj.type === "restock") acc.restock += adj.quantity;
-      if (adj.type === "giveaway") acc.giveaway += adj.quantity;
-      if (adj.type === "loss") acc.loss += adj.quantity;
-      return acc;
-    },
-    { restock: 0, giveaway: 0, loss: 0 }
-  );
-
-  return totals.restock - (totals.giveaway + totals.loss);
-};
-
-function summarizeAdjustments(adjustments, price) {
-  let restock = 0;
-  let giveaway = 0;
-  let loss = 0;
-  let discount = 0;
-  let totalDiscount = 0;
+const processAdjustments = (adjustments, price = 0) => {
+  const totals = {
+    restock: 0,
+    giveaway: 0,
+    loss: 0,
+    discount: 0,
+    totalDiscount: 0,
+  };
 
   for (const adj of adjustments) {
-    if (adj.type === "restock") {
-      restock += adj.quantity;
-    } else if (adj.type === "giveaway") {
-      giveaway += adj.quantity;
-    } else if (adj.type === "loss") {
-      loss += adj.quantity;
-    } else if (adj.type === "discount") {
-      discount += adj.quantity;
-      // Calculate discount amount
+    totals[adj.type] += adj.quantity;
+
+    if (adj.type === "discount") {
       if (adj.discountType === "percentage") {
         const discountPerUnit = price * (adj.discountValue / 100);
-        totalDiscount += discountPerUnit * adj.quantity;
+        totals.totalDiscount += discountPerUnit * adj.quantity;
       } else if (adj.discountType === "fixed") {
-        totalDiscount += parseFloat(adj.discountValue) * adj.quantity;
+        totals.totalDiscount += parseFloat(adj.discountValue) * adj.quantity;
       }
     }
   }
 
-  return { restock, giveaway, loss, discount, totalDiscount };
-}
+  return totals;
+};
+
+const calculateAdjustments = (adjustments) => {
+  const { restock, giveaway, loss } = processAdjustments(adjustments);
+  return restock - (giveaway + loss);
+};
+
+const summarizeAdjustments = (adjustments, price) => {
+  const totals = processAdjustments(adjustments, price);
+  return {
+    restock: totals.restock,
+    giveaway: totals.giveaway,
+    loss: totals.loss,
+    discount: totals.discount,
+    totalDiscount: parseFloat(totals.totalDiscount.toFixed(2)),
+  };
+};
 
 module.exports = { calculateAdjustments, summarizeAdjustments };
