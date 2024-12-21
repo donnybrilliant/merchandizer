@@ -1,111 +1,17 @@
 const request = require("supertest");
 const app = require("../app");
-const db = require("../models");
 
 describe("Adjustments Tests", () => {
-  const testUser = {
-    firstName: "Adjustment",
-    lastName: "User",
-    email: "adjustment@test.com",
-    password: "password",
-  };
-
-  let authToken;
-  let artistId;
-  let categoryId;
-  let productId;
-  let showId;
-  let tourId;
-  let inventoryId;
-  // Setup: Register and log in the test user
+  // Setup
   beforeAll(async () => {
-    // Register the test user
-    await request(app).post("/register").send(testUser);
-
-    // Log in and get the token
-    const loginRes = await request(app).post("/login").send({
-      email: testUser.email,
-      password: testUser.password,
-    });
-
-    authToken = loginRes.body.data.token;
-    testUser.id = loginRes.body.data.id;
-
-    // Create an artist
-    const artistRes = await request(app)
-      .post("/artists")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({ name: "Adjustment Artist" });
-    artistId = artistRes.body.data.id;
-
-    // Create a tour
-    const tourRes = await request(app)
-      .post("/tours")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        name: "Adjustment Tour",
-        startDate: "2025-01-01",
-        endDate: "2025-01-10",
-        artistId: artistId,
-      });
-    tourId = tourRes.body.data.id;
-
-    // Create a show
-    const showRes = await request(app)
-      .post(`/tours/${tourId}/shows`)
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        date: "2025-01-01",
-        venue: "Adjustment Venue",
-        city: "Adjustment City",
-        country: "Adjustment Country",
-        artistId: artistId,
-      });
-    showId = showRes.body.data.id;
-
-    // Create a category
-    const categoryRes = await request(app)
-      .post(`/categories`)
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({ name: "Adjustment Category" });
-    categoryId = categoryRes.body.data.id;
-
-    // Create a product
-    const productRes = await request(app)
-      .post(`/products`)
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        name: "Adjustment Product",
-        price: 10,
-        categoryId: categoryId,
-        artistId: artistId,
-      });
-    productId = productRes.body.data.id;
-
-    // Create an inventory
-    const inventoryRes = await request(app)
-      .post(`/tours/${tourId}/shows/${showId}/inventory/${productId}`)
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        startInventory: 100,
-      });
-    inventoryId = inventoryRes.body.data.id;
-  });
-
-  // Cleanup after all tests
-  afterAll(async () => {
-    await db.Adjustment.destroy({
-      where: { showInventoryId: inventoryId },
-    });
-    await db.ShowInventory.destroy({
-      where: { showId: showId, productId: productId },
-    });
-    await db.Show.destroy({ where: { id: showId } });
-    await db.Tour.destroy({ where: { id: tourId } });
-    await db.Product.destroy({ where: { id: productId } });
-    await db.Category.destroy({ where: { id: categoryId } });
-    await db.Artist.destroy({ where: { id: artistId } });
-    await db.User.destroy({ where: { email: testUser.email } });
+    authToken = global.authToken;
+    testUser.id = global.testUser.id;
+    artistId = global.artistId;
+    categoryId = global.categoryId;
+    productId = global.productId;
+    showId = global.showId;
+    tourId = global.tourId;
+    inventoryId = global.inventoryId;
   });
 
   // Create an adjustment

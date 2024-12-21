@@ -18,7 +18,7 @@ describe("Shows Tests", () => {
     onStageTime: "21:00",
   };
 
-  // Global setup
+  // Setup
   beforeAll(() => {
     authToken = global.authToken;
     artistId = global.artistId;
@@ -29,14 +29,9 @@ describe("Shows Tests", () => {
     showData.tourId = tourId;
   });
 
+  // Cleanup after all tests
   afterAll(async () => {
-    /*      if (showId) {
-        await db.Show.destroy({ where: { id: showId } });
-      } */
-
-    if (bulkShowIds.length > 0) {
-      await db.Show.destroy({ where: { id: bulkShowIds } });
-    }
+    await db.Show.destroy({ where: { id: bulkShowIds } });
   });
 
   // Create a show

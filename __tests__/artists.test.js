@@ -5,7 +5,7 @@ describe("Artists Tests", () => {
   let artistId;
   const artistName = "Test Artist";
 
-  // Global setup
+  // Setup
   beforeAll(() => {
     authToken = global.authToken;
   });
