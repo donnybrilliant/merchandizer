@@ -27,17 +27,6 @@ router.get(
   }
 );
 
-// Get stats for a specific tour
-router.get("/tours/:tourId", authorize("viewStats"), async (req, res, next) => {
-  try {
-    const { tourId } = req.params;
-    const stats = await statsService.getTourStats(tourId);
-    res.status(200).json({ success: true, data: stats });
-  } catch (err) {
-    next(err);
-  }
-});
-
 // Get stats for a product in a specific tour
 router.get(
   "/tours/:tourId/products/:productId",
@@ -55,6 +44,17 @@ router.get(
     }
   }
 );
+
+// Get stats for a specific tour
+router.get("/tours/:tourId", authorize("viewStats"), async (req, res, next) => {
+  try {
+    const { tourId } = req.params;
+    const stats = await statsService.getTourStats(tourId);
+    res.status(200).json({ success: true, data: stats });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.param("tourId", validateAndFindTour);
 router.param("showId", validateAndFindShow);
