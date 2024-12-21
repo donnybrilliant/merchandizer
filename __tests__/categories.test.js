@@ -6,7 +6,7 @@ describe("Categories Tests", () => {
   let categoryName = "Test Category";
   let updatedName = "Updated Category";
 
-  // Global setup
+  // Setup
   beforeAll(() => {
     authToken = global.authToken;
   });

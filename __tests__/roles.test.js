@@ -10,65 +10,31 @@ describe("Roles Tests", () => {
     password: "password",
   };
 
-  const testUser2 = {
-    firstName: "Role2",
-    lastName: "User2",
-    email: "role2@test.com",
-    password: "password",
-  };
-
   let authToken;
   let authToken2;
-  let artistId;
-  let tourId;
 
   // Setup
   beforeAll(async () => {
-    // Register the test users
+    authToken = global.authToken;
+    userId = global.testUser.id;
+    artistId = global.artistId;
+    tourId = global.tourId;
+
+    // Create testUser
     await request(app).post("/register").send(testUser);
-    await request(app).post("/register").send(testUser2);
-    // Log in and get the token
     const loginRes = await request(app).post("/login").send({
       email: testUser.email,
       password: testUser.password,
     });
-
-    authToken = loginRes.body.data.token;
+    authToken2 = loginRes.body.data.token;
     testUser.id = loginRes.body.data.id;
-
-    const loginRes2 = await request(app).post("/login").send({
-      email: testUser2.email,
-      password: testUser2.password,
-    });
-    authToken2 = loginRes2.body.data.token;
-    testUser2.id = loginRes2.body.data.id;
-
-    // Create an artist
-    const artistRes = await request(app)
-      .post("/artists")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({ name: "Role Artist" });
-    artistId = artistRes.body.data.id;
-
-    // Create a tour
-    const tourRes = await request(app)
-      .post("/tours")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        name: "Role Tour",
-        startDate: "2025-01-01",
-        endDate: "2025-01-10",
-        artistId,
-      });
-    tourId = tourRes.body.data.id;
   });
 
   // Cleanup after all tests
   afterAll(async () => {
-    await db.Tour.destroy({ where: { id: tourId } });
-    await db.Artist.destroy({ where: { id: artistId } });
-    await db.User.destroy({ where: { email: testUser.email } });
-    await db.User.destroy({ where: { email: testUser2.email } });
+    if (testUser.id) {
+      await db.User.destroy({ where: { id: testUser.id } });
+    }
   });
 
   // Add a user to a tour
@@ -76,7 +42,7 @@ describe("Roles Tests", () => {
     const res = await request(app)
       .post(`/tours/${tourId}/roles`)
       .set("Authorization", `Bearer ${authToken}`)
-      .send({ userId: testUser2.id, role: "manager" });
+      .send({ userId: testUser.id, role: "manager" });
 
     expect(res.statusCode).toBe(201);
     expect(res.body.success).toBe(true);
@@ -97,7 +63,7 @@ describe("Roles Tests", () => {
   // Should not downgrade the tour creator
   it("should not downgrade the tour creator", async () => {
     const res = await request(app)
-      .put(`/tours/${tourId}/roles/${testUser.id}`)
+      .put(`/tours/${tourId}/roles/${userId}`)
       .set("Authorization", `Bearer ${authToken2}`)
       .send({ role: "sales" });
 
@@ -111,7 +77,7 @@ describe("Roles Tests", () => {
   // Cant delete the tour creator
   it("should not delete the tour creator", async () => {
     const res = await request(app)
-      .delete(`/tours/${tourId}/roles/${testUser.id}`)
+      .delete(`/tours/${tourId}/roles/${userId}`)
       .set("Authorization", `Bearer ${authToken2}`);
 
     expect(res.statusCode).toBe(400);
@@ -124,7 +90,7 @@ describe("Roles Tests", () => {
   // Update a users role
   it("should update a user's role", async () => {
     const res = await request(app)
-      .put(`/tours/${tourId}/roles/${testUser2.id}`)
+      .put(`/tours/${tourId}/roles/${testUser.id}`)
       .set("Authorization", `Bearer ${authToken}`)
       .send({ role: "sales" });
 
@@ -136,7 +102,7 @@ describe("Roles Tests", () => {
   // Delete a user from a tour
   it("should delete a user from a tour", async () => {
     const res = await request(app)
-      .delete(`/tours/${tourId}/roles/${testUser2.id}`)
+      .delete(`/tours/${tourId}/roles/${testUser.id}`)
       .set("Authorization", `Bearer ${authToken}`);
 
     expect(res.statusCode).toBe(200);

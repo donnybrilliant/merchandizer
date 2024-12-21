@@ -1,6 +1,5 @@
 const request = require("supertest");
 const app = require("../app");
-const db = require("../models");
 
 describe("Users Tests", () => {
   const testUser = {
@@ -10,7 +9,7 @@ describe("Users Tests", () => {
     password: "password",
   };
 
-  // Global setup
+  // Setup
   beforeAll(async () => {
     // Register the test user
     await request(app).post("/register").send(testUser);
@@ -23,11 +22,6 @@ describe("Users Tests", () => {
 
     authToken = loginRes.body.data.token;
     userId = loginRes.body.data.id;
-  });
-
-  // Cleanup after all tests
-  afterAll(async () => {
-    await db.User.destroy({ where: { id: userId } });
   });
 
   // Get the current user

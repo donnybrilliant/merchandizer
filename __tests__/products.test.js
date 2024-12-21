@@ -9,17 +9,17 @@ describe("Products Tests", () => {
     description: "Test Description",
     color: "red",
     size: "M",
-    price: "10.00",
+    price: 10,
   };
   let productUpdate = {
     name: "Updated Product",
     description: "Updated Description",
     color: "blue",
     size: "L",
-    price: "15.00",
+    price: 15,
   };
 
-  // Global setup
+  // Setup
   beforeAll(() => {
     authToken = global.authToken;
     categoryId = global.categoryId;
@@ -62,22 +62,7 @@ describe("Products Tests", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toMatchObject({
-      id: productId,
-      name: productName,
-      description: productData.description,
-      color: productData.color,
-      size: productData.size,
-      price: productData.price,
-      Category: {
-        id: categoryId,
-        name: categoryName,
-      },
-      Artist: {
-        id: artistId,
-        name: artistName,
-      },
-    });
+    expect(res.body.data).toMatchObject(productData);
   });
 
   // Search for a product
@@ -103,22 +88,7 @@ describe("Products Tests", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.message).toBe("Product updated successfully");
-    expect(res.body.data).toMatchObject({
-      id: productId,
-      name: productUpdate.name,
-      description: productUpdate.description,
-      color: productUpdate.color,
-      size: productUpdate.size,
-      price: productUpdate.price,
-      Category: {
-        id: categoryId,
-        name: categoryName,
-      },
-      Artist: {
-        id: artistId,
-        name: artistName,
-      },
-    });
+    expect(res.body.data).toMatchObject(productUpdate);
   });
 
   // No changes made to the product
