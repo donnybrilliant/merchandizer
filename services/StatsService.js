@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const createError = require("http-errors");
 const {
   summarizeAdjustments,
@@ -10,6 +11,8 @@ class StatsService {
     this.ShowInventory = db.ShowInventory;
     this.Adjustment = db.Adjustment;
     this.Product = db.Product;
+    this.Artist = db.Artist;
+    this.Category = db.Category;
   }
 
   // Get statistics for a single show
@@ -18,6 +21,18 @@ class StatsService {
       where: { showId },
       include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
     });
+
+    // Check if any `endInventory` is null
+    const hasNullEndInventory = inventories.some(
+      (inventory) => inventory.endInventory === null
+    );
+
+    if (hasNullEndInventory) {
+      throw createError(
+        400,
+        "Cannot calculate stats for this show: at least one endInventory is null"
+      );
+    }
 
     const productStats = await Promise.all(
       inventories.map(async (inventory) => {
@@ -29,28 +44,21 @@ class StatsService {
         const { restock, giveaway, loss, discount, totalDiscount } =
           summarizeAdjustments(adjustments, price);
 
-        // Calculate sold
-        const endInventory = inventory.endInventory ?? 0;
-        const adjustedStart =
-          inventory.startInventory + restock - giveaway - loss;
+        const endInventory = parseFloat(inventory.endInventory);
+        const startInventory = parseFloat(inventory.startInventory);
+        const adjustedStart = startInventory + restock - giveaway - loss;
         const sold = adjustedStart - endInventory;
 
-        // Calculate revenues
         const revenue = sold * price;
         const netRevenue = revenue - totalDiscount;
 
         return {
           productId: inventory.productId,
           productName: inventory.Product.name,
-          startInventory: inventory.startInventory,
-          endInventory: inventory.endInventory,
+          startInventory,
+          endInventory,
           sold,
-          adjustments: {
-            restock,
-            giveaway,
-            loss,
-            discount,
-          },
+          adjustments: { restock, giveaway, loss, discount },
           revenue: parseFloat(revenue.toFixed(2)),
           totalDiscount: parseFloat(totalDiscount.toFixed(2)),
           netRevenue: parseFloat(netRevenue.toFixed(2)),
@@ -58,90 +66,95 @@ class StatsService {
       })
     );
 
-    // Calculate totals
-    const totalSold = productStats.reduce((acc, stat) => acc + stat.sold, 0);
-    const totalRevenue = productStats.reduce(
-      (acc, stat) => acc + stat.revenue,
-      0
-    );
-    const totalDiscountAmt = productStats.reduce(
-      (acc, stat) => acc + stat.totalDiscount,
-      0
-    );
-    const totalNetRevenue = productStats.reduce(
-      (acc, stat) => acc + stat.netRevenue,
-      0
-    );
-
-    const totalRestock = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.restock,
-      0
-    );
-    const totalGiveaway = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.giveaway,
-      0
-    );
-    const totalLoss = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.loss,
-      0
-    );
-    const totalDiscountQty = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.discount,
-      0
-    );
-
-    return {
-      products: productStats,
-      totals: {
-        sold: totalSold,
-        revenue: parseFloat(totalRevenue.toFixed(2)),
-        totalDiscount: parseFloat(totalDiscountAmt.toFixed(2)),
-        netRevenue: parseFloat(totalNetRevenue.toFixed(2)),
-        adjustments: {
-          restock: totalRestock,
-          giveaway: totalGiveaway,
-          loss: totalLoss,
-          discount: totalDiscountQty,
-        },
-      },
-    };
+    const totals = this.aggregateStats(productStats);
+    return { products: productStats, totals };
   }
 
-  //Get statistics for all shows in a tour
+  // Aggregate totals from product stats
+  aggregateStats(productStats) {
+    return productStats.reduce(
+      (acc, stat) => {
+        acc.sold += stat.sold;
+        acc.revenue += stat.revenue;
+        acc.totalDiscount += stat.totalDiscount;
+        acc.netRevenue += stat.netRevenue;
+        acc.adjustments.restock += stat.adjustments.restock;
+        acc.adjustments.giveaway += stat.adjustments.giveaway;
+        acc.adjustments.loss += stat.adjustments.loss;
+        acc.adjustments.discount += stat.adjustments.discount;
+        return acc;
+      },
+      {
+        sold: 0,
+        revenue: 0,
+        totalDiscount: 0,
+        netRevenue: 0,
+        adjustments: { restock: 0, giveaway: 0, loss: 0, discount: 0 },
+      }
+    );
+  }
+
+  // Get stats for all shows in a tour
   async getTourStats(tourId) {
     const shows = await this.Show.findAll({ where: { tourId } });
 
-    let grandTotalSold = 0;
-    let grandTotalRevenue = 0;
+    const allStats = await Promise.all(
+      shows.map(async (show) => {
+        try {
+          return await this.getShowStats(show.id);
+        } catch (error) {
+          // Skip shows with null endInventory
+          if (error.status === 400) return null;
+          throw error; // Re-throw unexpected errors
+        }
+      })
+    );
 
-    for (const show of shows) {
-      const { totals } = await this.getShowStats(show.id);
-      grandTotalSold += totals.sold;
-      grandTotalRevenue += totals.revenue;
-    }
+    const validStats = allStats.filter(Boolean); // Exclude null results
 
-    return {
-      tourId,
-      sold: grandTotalSold,
-      revenue: parseFloat(grandTotalRevenue.toFixed(2)),
-    };
+    const grandTotals = validStats.reduce(
+      (acc, stat) => {
+        acc.sold += stat.totals.sold;
+        acc.revenue += stat.totals.revenue;
+        acc.totalDiscount += stat.totals.totalDiscount;
+        acc.netRevenue += stat.totals.netRevenue;
+        acc.adjustments.restock += stat.totals.adjustments.restock;
+        acc.adjustments.giveaway += stat.totals.adjustments.giveaway;
+        acc.adjustments.loss += stat.totals.adjustments.loss;
+        acc.adjustments.discount += stat.totals.adjustments.discount;
+        return acc;
+      },
+      {
+        sold: 0,
+        revenue: 0,
+        totalDiscount: 0,
+        netRevenue: 0,
+        adjustments: { restock: 0, giveaway: 0, loss: 0, discount: 0 },
+      }
+    );
+
+    return { tourId, totals: grandTotals };
   }
 
-  // Get total sales for a specific product across all shows in a tour
+  // Get stats for a product in a tour
   async getProductStatsForTour(productId, tourId) {
-    // Check if product exists
-    const product = await this.Product.findByPk(productId);
-    if (!product) throw createError(404, "Product not found");
-
     const shows = await this.Show.findAll({ where: { tourId } });
-    let totalSold = 0;
-    let totalRevenue = 0;
-    let productName = null;
+
+    // Fetch product details once
+    const product = await this.Product.findOne({
+      where: { id: productId },
+      attributes: ["id", "name", "price", "size", "color"],
+      include: [
+        { model: this.Artist, attributes: ["id", "name"] },
+        { model: this.Category, attributes: ["id", "name"] },
+      ],
+    });
+
+    const productStats = [];
 
     for (const show of shows) {
-      // Get inventories for this product in the show
       const inventories = await this.ShowInventory.findAll({
-        where: { showId: show.id, productId },
+        where: { showId: show.id, productId, endInventory: { [Op.not]: null } },
         include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
       });
 
@@ -150,21 +163,33 @@ class StatsService {
           where: { showInventoryId: inventory.id },
         });
 
+        const price = parseFloat(inventory.Product.price);
         const netAdjustment = calculateAdjustments(adjustments);
+        const endInventory = parseFloat(inventory.endInventory);
+        const startInventory = parseFloat(inventory.startInventory);
+        const sold = startInventory + netAdjustment - endInventory;
+        const revenue = sold * price;
 
-        const endInventory = inventory.endInventory ?? 0;
-        const sold = inventory.startInventory + netAdjustment - endInventory;
-        const revenue = sold * parseFloat(inventory.Product.price);
-
-        totalSold += sold;
-        totalRevenue += revenue;
-        if (!productName) {
-          productName = inventory.Product.name;
-        }
+        productStats.push({
+          sold,
+          revenue,
+          productName: inventory.Product.name,
+        });
       }
     }
 
-    return { productId, productName, tourId, totalSold, totalRevenue };
+    const totalSold = productStats.reduce((acc, stat) => acc + stat.sold, 0);
+    const totalRevenue = productStats.reduce(
+      (acc, stat) => acc + stat.revenue,
+      0
+    );
+
+    return {
+      Product: product, // Return all product details
+      tourId,
+      totalSold,
+      totalRevenue,
+    };
   }
 }
 
