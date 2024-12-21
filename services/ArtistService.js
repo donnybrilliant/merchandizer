@@ -5,6 +5,9 @@ const createError = require("http-errors");
 class ArtistService {
   constructor(db) {
     this.Artist = db.Artist;
+    this.Product = db.Product;
+    this.Tour = db.Tour;
+    this.Show = db.Show;
   }
 
   // Find all artists or search by query
