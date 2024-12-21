@@ -45,6 +45,19 @@ class ArtistService {
 
   // Update artist
   async update(artist, data) {
+    // Check if artist is in use
+    const productCount = await this.Product.count({
+      where: { artistId: artist.id },
+    });
+    const tourCount = await this.Tour.count({ where: { artistId: artist.id } });
+    const showCount = await this.Show.count({ where: { artistId: artist.id } });
+
+    if (productCount > 0 || tourCount > 0 || showCount > 0) {
+      throw createError(
+        400,
+        "Cannot update artist as it is referenced by existing tours, shows, or products"
+      );
+    }
     // Check if the data is the same as the artist
     if (isSameData(artist, data)) {
       return { noChanges: true, data: artist };

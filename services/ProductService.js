@@ -12,11 +12,11 @@ class ProductService {
     this.defaultInclude = [
       {
         model: this.Category,
-        attributes: ["name"],
+        attributes: ["id", "name"],
       },
       {
         model: this.Artist,
-        attributes: ["name"],
+        attributes: ["id", "name"],
       },
     ];
   }
@@ -58,6 +58,7 @@ class ProductService {
   async getById(id) {
     const product = await this.Product.findByPk(id, {
       include: this.defaultInclude,
+      attributes: ["id", "name", "description", "color", "size", "price"],
     });
     if (!product) throw createError(404, "Product not found");
     return product;
@@ -72,7 +73,7 @@ class ProductService {
 
     // Check if category exists
 
-      const category = await this.Category.findByPk(data.categoryId);
+    const category = await this.Category.findByPk(data.categoryId);
     if (!category)
       throw createError(404, "Category not found. Cannot create product");
 

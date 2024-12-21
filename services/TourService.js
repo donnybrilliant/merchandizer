@@ -14,6 +14,7 @@ class TourService {
   async getAll() {
     return await this.Tour.findAll({
       include: [{ model: this.Artist, attributes: ["id", "name"] }],
+      attributes: { exclude: ["artistId"] },
     });
   }
 
@@ -43,7 +44,14 @@ class TourService {
   async getById(id) {
     // Check if tour exists
     const tour = await this.Tour.findByPk(id, {
-      include: [{ model: this.Artist, attributes: ["id", "name"] }],
+      attributes: ["id", "name", "startDate", "endDate"],
+      include: [
+        { model: this.Artist, attributes: ["id", "name"] },
+        {
+          model: this.Show,
+          attributes: ["id", "date", "venue", "city", "country"],
+        },
+      ],
     });
     if (!tour) throw createError(404, "Tour not found");
     return tour;
@@ -73,6 +81,17 @@ class TourService {
 
   // Update tour
   async update(tour, data) {
+    // Check if the tour has any shows
+    if (data.artistId && data.artistId !== tour.artistId) {
+      const showCount = await this.Show.count({ where: { tourId: tour.id } });
+      if (showCount > 0) {
+        throw createError(
+          400,
+          "Cannot change the artistId of a tour that already has shows"
+        );
+      }
+    }
+
     // Check if no changes are made
     if (isSameData(tour, data)) {
       return { noChanges: true, data: tour };

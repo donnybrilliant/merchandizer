@@ -78,10 +78,10 @@ router.post("/copy", authorize("manageInventory"), async (req, res, next) => {
     const { updated, unchanged } =
       await inventoryService.copyInventoryFromPreviousShow(
         currentShowId,
-        previousShow
+        previousShow.id
       );
 
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "Inventory copy processed",
       data: {
