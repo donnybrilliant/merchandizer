@@ -18,6 +18,10 @@ class TourService {
       },
     ];
     this.defaultExclude = ["artistId"];
+    this.defaultOrder = [
+      ["startDate", "ASC"],
+      [this.Show, "date", "ASC"],
+    ];
   }
 
   // Get all tours
@@ -44,6 +48,7 @@ class TourService {
           required: true,
         },
       ],
+      order: this.defaultOrder,
     });
   }
 
@@ -53,6 +58,7 @@ class TourService {
     const tour = await this.Tour.findByPk(id, {
       attributes: { exclude: [...this.defaultExclude, "createdBy"] },
       include: this.defaultInclude,
+      order: this.defaultOrder,
     });
     if (!tour) throw createError(404, "Tour not found");
     return tour;

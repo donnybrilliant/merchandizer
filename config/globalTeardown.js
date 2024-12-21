@@ -7,8 +7,8 @@ module.exports = async () => {
     });
     await db.Show.destroy({ where: { id: global.showId } });
     await db.Tour.destroy({ where: { id: global.tourId } });
-    await db.Category.destroy({ where: { id: global.categoryId } });
     await db.Product.destroy({ where: { id: global.productId } });
+    await db.Category.destroy({ where: { id: global.categoryId } });
     await db.Artist.destroy({ where: { id: global.artistId } });
     await db.User.destroy({ where: { id: global.testUser.id } });
     // Close database connection
