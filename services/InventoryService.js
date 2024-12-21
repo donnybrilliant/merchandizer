@@ -16,6 +16,10 @@ class InventoryService {
         attributes: ["id", "name", "price", "size", "color"],
       },
       {
+        model: this.Show,
+        attributes: ["id", "tourId"],
+      },
+      {
         model: this.Adjustment,
         attributes: ["id", "quantity", "reason", "type"],
       },
