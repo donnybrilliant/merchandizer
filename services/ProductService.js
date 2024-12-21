@@ -7,6 +7,7 @@ class ProductService {
     this.Product = db.Product;
     this.Category = db.Category;
     this.Artist = db.Artist;
+    this.ShowInventory = db.ShowInventory;
 
     // Default includes
     this.defaultInclude = [
@@ -83,6 +84,17 @@ class ProductService {
   // Update product
   async update(product, data) {
     // Check if no changes were made
+    if (data.artistId && data.artistId !== product.artistId) {
+      const showCount = await this.ShowInventory.count({
+        where: { productId: product.id },
+      });
+      if (showCount > 0) {
+        throw createError(
+          400,
+          "Cannot change the artistId of a product that is referenced by existing show inventories"
+        );
+      }
+    }
     if (isSameData(product, data)) {
       return { noChanges: true, data: product };
     }
