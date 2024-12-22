@@ -10,7 +10,7 @@ Internship Project / Exam Project 1 at Noroff
 
 ### Prerequisites
 
-[Node.js v23.5.0](https://nodejs.org/en/download/package-manager) should also work on v22.12.0 (with Long Term Support)
+[Node.js v23.5.0](https://nodejs.org/en/download/package-manager) should also work on v22.12.0 (with Long Term Support)  
 [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) or similar Database Management System
 
 1. ### Clone the Repository
@@ -44,11 +44,11 @@ Internship Project / Exam Project 1 at Noroff
 
     In your DBMS, run this SQL command:
 
-    ```sql
-    CREATE USER 'admin'@'localhost' IDENTIFIED BY 'P@ssw0rd';
-    GRANT ALL PRIVILEGES ON merchandizer.* TO 'admin'@'localhost';
-    FLUSH PRIVILEGES;
-    ```
+```sql
+CREATE USER 'admin'@'localhost' IDENTIFIED BY 'P@ssw0rd';
+GRANT ALL PRIVILEGES ON merchandizer.* TO 'admin'@'localhost';
+FLUSH PRIVILEGES;
+```
 
 4. ### Set up .env
 
@@ -135,15 +135,15 @@ This is not available in the production deployment since you dont need to be aut
 
 # REFERENCES
 
-[sequelize](https://sequelize.org/docs/v6/)
-[express-validator](https://express-validator.github.io/docs)
-[multer](https://github.com/expressjs/multer)
-[sharp](https://sharp.pixelplumbing.com/)
-[Promise.all](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all)
-[setting up S3 Bucket](https://medium.com/@shivam97.dawar/easy-and-simple-4-steps-to-upload-images-to-aws-s3-bucket-through-node-js-server-using-express-5f1095fcc485)
-[AWS-SDK](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html)
-[AWS-SDK@Client-S3](https://www.npmjs.com/package/@aws-sdk/client-s3)
-[API Best Practices](https://apibestpractices.info/url-design/nested-resources)
-[router.param](https://javascript.plainenglish.io/using-param-middleware-in-express-simplifying-route-validation-36e939635567)
-[Postman to Swagger](https://www.postman.com/postman/postman-public-workspace/documentation/ijkf7ei/postman-to-swagger-oas-2)
+[sequelize](https://sequelize.org/docs/v6/)  
+[express-validator](https://express-validator.github.io/docs)  
+[multer](https://github.com/expressjs/multer)  
+[sharp](https://sharp.pixelplumbing.com/)  
+[Promise.all](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all)  
+[setting up S3 Bucket](https://medium.com/@shivam97.dawar/easy-and-simple-4-steps-to-upload-images-to-aws-s3-bucket-through-node-js-server-using-express-5f1095fcc485)  
+[AWS-SDK](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html)  
+[AWS-SDK@Client-S3](https://www.npmjs.com/package/@aws-sdk/client-s3)  
+[API Best Practices](https://apibestpractices.info/url-design/nested-resources)  
+[router.param](https://javascript.plainenglish.io/using-param-middleware-in-express-simplifying-route-validation-36e939635567)  
+[Postman to Swagger](https://www.postman.com/postman/postman-public-workspace/documentation/ijkf7ei/postman-to-swagger-oas-2)  
 [ChatGPT](https://chat.openai.com)
