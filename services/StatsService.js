@@ -52,9 +52,13 @@ class StatsService {
   // Get stats for a single show
   async getShowStats(showId) {
     const show = await this.Show.findByPk(showId, {
+      attributes: ["id", "date", "venue", "city", "country"],
       include: {
         model: this.Tour,
-        attributes: ["id", "name"],
+        attributes: { exclude: ["artistId", "createdBy"] },
+        include: {
+          model: this.Artist,
+        },
       },
     });
 
@@ -87,7 +91,6 @@ class StatsService {
       attributes: { exclude: ["artistId", "createdBy"] },
       include: {
         model: this.Artist,
-        attributes: ["id", "name"],
       },
     });
 
@@ -116,7 +119,10 @@ class StatsService {
     const grandTotals = mergeStats(validStats.map((stat) => stat.totals));
 
     return {
-      Tour: tour,
+      Tour: {
+        ...tour.toJSON(),
+        numberOfShows: shows.length,
+      },
       totals: formatTotals(grandTotals),
     };
   }
@@ -124,9 +130,9 @@ class StatsService {
   // Get stats for a product in a tour
   async getProductStatsForTour(productId, tourId) {
     const tour = await this.Tour.findByPk(tourId, {
+      attributes: { exclude: ["artistId", "createdBy"] },
       include: {
         model: this.Artist,
-        attributes: ["id", "name"],
       },
     });
 
@@ -169,7 +175,10 @@ class StatsService {
     const totals = mergeStats(validStats);
 
     return {
-      Tour: tour,
+      Tour: {
+        ...tour.toJSON(),
+        numberOfShows: shows.length,
+      },
       Product: product,
       totals: formatTotals(totals),
     };
