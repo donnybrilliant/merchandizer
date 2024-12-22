@@ -2,8 +2,6 @@
 
 Internship Project / Exam Project 1 at Noroff
 
-[Postman](https://www.postman.com/wolfzkin/workspace/merchandizer/collection/14878277-b26761a4-e2dd-4640-82b1-1ddc303bc8a2?action=share&creator=14878277)
-[Showscraper](https://showscraper.onrender.com)
 [Deployment](https://merchandizer.onrender.com)
 
 # Application Installation and Usage Instructions
@@ -109,16 +107,10 @@ The application will be accessible at to use with at [localhost:3000](http://loc
 
 ### Check the the API Documentation
 
-The API is documented using Swagger UI, which provides a user-friendly interface to explore and test API endpoints.
-You can also test it with the Postman Collection or view the Postman Documentation below.
-
-Swagger URL: [localhost:3000/doc](http://localhost:3000/doc)
-
-[Postman Collection](https://www.postman.com/wolfzkin/workspace/merchandizer/collection/14878277-b26761a4-e2dd-4640-82b1-1ddc303bc8a2?action=share&creator=14878277)
+The Merchandizer API is designed to manage band merchandise inventory during tours.
+For detailed examples and responses, refer to the [Postman Collection](https://www.postman.com/wolfzkin/workspace/merchandizer/collection/14878277-b26761a4-e2dd-4640-82b1-1ddc303bc8a2?action=share&creator=14878277)
 
 [Postman Documentation](https://www.postman.com/wolfzkin/merchandizer/documentation/dkmx3ul/merchandizer)
-
-###
 
 If you want to populate the database with example data for manual testing, this can be done with a POST request to the endpoint [localhost:3000/init]. This also adds the admin user specified in the Course Assignment Instructions.
 This is not available in the production deployment since you dont need to be authenticated to use this endpoint.
