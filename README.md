@@ -38,11 +38,11 @@ Internship Project / Exam Project 1 at Noroff
 
 #### Database Access
 
-    - Create a new MySQL user 'admin' with the password 'P@ssw0rd'
-    - Grant all privileges on the 'myTodo' database to 'admin'
-    - Apply the privilege changes
+- Create a new MySQL user 'admin' with the password 'P@ssw0rd'
+- Grant all privileges on the 'myTodo' database to 'admin'
+- Apply the privilege changes
 
-    In your DBMS, run this SQL command:
+  In your DBMS, run this SQL command:
 
 ```sql
 CREATE USER 'admin'@'localhost' IDENTIFIED BY 'P@ssw0rd';
