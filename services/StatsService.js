@@ -14,29 +14,6 @@ class StatsService {
     this.Product = db.Product;
     this.Tour = db.Tour;
     this.Artist = db.Artist;
-
-    // Default includes
-    this.productInclude = {
-      model: this.Product,
-      attributes: ["id", "name", "price", "size", "color"],
-    };
-
-    this.tourInclude = {
-      model: this.Tour,
-      attributes: ["id", "name", "startDate", "endDate"],
-      include: [
-        {
-          model: this.Artist,
-          attributes: ["id", "name"],
-        },
-      ],
-    };
-
-    this.showInclude = {
-      model: this.Show,
-      attributes: ["id", "date", "venue", "city", "country"],
-      include: [this.tourInclude],
-    };
   }
 
   // Fetch inventories with optional filtering
@@ -51,7 +28,12 @@ class StatsService {
 
     return await this.ShowInventory.findAll({
       where,
-      include: [this.productInclude, this.showInclude],
+      include: [
+        {
+          model: this.Product,
+          attributes: ["id", "name", "price", "size", "color"],
+        },
+      ],
     });
   }
 
@@ -69,22 +51,31 @@ class StatsService {
 
   // Get stats for a single show
   async getShowStats(showId) {
+    const show = await this.Show.findByPk(showId, {
+      include: {
+        model: this.Tour,
+        attributes: ["id", "name"],
+      },
+    });
+
     const inventories = await this.fetchInventories(showId);
 
-    // Check if endInventory is null for any inventory
+    if (!inventories.length) {
+      throw createError(404, "No inventories found for the show");
+    }
+
     if (inventories.some((inventory) => inventory.endInventory === null)) {
       throw createError(
         400,
-        "Cannot calculate stats for this show because at least one endInventory is null"
+        "Cannot calculate stats for this show, because at least one endInventory is null"
       );
     }
 
-    // Process inventories and calculate totals
     const productStats = await this.processInventories(inventories);
     const totals = mergeStats(productStats);
 
     return {
-      Show: inventories[0].Show,
+      Show: show,
       products: productStats,
       totals: formatTotals(totals),
     };
@@ -92,19 +83,28 @@ class StatsService {
 
   // Get stats for all shows in a tour
   async getTourStats(tourId) {
+    const tour = await this.Tour.findByPk(tourId, {
+      attributes: { exclude: ["artistId", "createdBy"] },
+      include: {
+        model: this.Artist,
+        attributes: ["id", "name"],
+      },
+    });
+
     const shows = await this.Show.findAll({
       where: { tourId },
-      include: [this.tourInclude],
     });
+
+    if (!shows.length) {
+      throw createError(404, "No shows found for the tour");
+    }
 
     const allStats = await Promise.all(
       shows.map(async (show) => {
         const inventories = await this.fetchInventories(show.id, null, true);
 
-        // Skip shows without endInventory
         if (inventories.length === 0) return null;
 
-        // Process inventories and calculate totals for the show
         const productStats = await this.processInventories(inventories);
         const totals = mergeStats(productStats);
 
@@ -112,43 +112,65 @@ class StatsService {
       })
     );
 
-    // Filter out null stats and merge totals across all valid stats
     const validStats = allStats.filter(Boolean);
     const grandTotals = mergeStats(validStats.map((stat) => stat.totals));
 
     return {
-      Tour: shows[0].Tour,
+      Tour: tour,
       totals: formatTotals(grandTotals),
     };
   }
 
   // Get stats for a product in a tour
   async getProductStatsForTour(productId, tourId) {
-    const shows = await this.Show.findAll({
-      where: { tourId },
-      include: [this.tourInclude],
+    const tour = await this.Tour.findByPk(tourId, {
+      include: {
+        model: this.Artist,
+        attributes: ["id", "name"],
+      },
     });
 
-    const productStats = [];
-    let productDetails;
+    const product = await this.Product.findByPk(productId, {
+      attributes: ["id", "name", "price", "size", "color"],
+    });
 
-    for (const show of shows) {
-      const inventories = await this.fetchInventories(show.id, productId, true);
+    const shows = await this.Show.findAll({
+      where: { tourId },
+    });
 
-      // Process inventories and add product stats
-      const processedInventories = await this.processInventories(inventories);
-      productStats.push(...processedInventories);
-
-      // Set product details
-      productDetails = { ...inventories[0].Product.dataValues };
+    if (!shows.length) {
+      throw createError(404, "No shows found for the tour");
     }
 
-    // Calculate totals
-    const totals = mergeStats(productStats);
+    const allStats = await Promise.all(
+      shows.map(async (show) => {
+        const inventories = await this.fetchInventories(
+          show.id,
+          productId,
+          true
+        );
+
+        if (!inventories.length) return null;
+
+        const productStats = await this.processInventories(inventories);
+        return productStats;
+      })
+    );
+
+    const validStats = allStats.flat().filter(Boolean);
+
+    // If no valid inventories exist for this product
+    if (!validStats.length) {
+      throw createError(
+        404,
+        "No inventories exist for this product in the tour or all endInventory are null"
+      );
+    }
+    const totals = mergeStats(validStats);
 
     return {
-      Tour: shows[0].Tour,
-      Product: productDetails,
+      Tour: tour,
+      Product: product,
       totals: formatTotals(totals),
     };
   }
