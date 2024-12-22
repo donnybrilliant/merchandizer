@@ -114,6 +114,7 @@ module.exports = async () => {
       .send({
         productId: global.productId,
         startInventory: 100,
+        endInventory: 50,
       });
 
     if (!inventoryRes.body || !inventoryRes.body.data) {

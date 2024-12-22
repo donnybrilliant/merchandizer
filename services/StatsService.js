@@ -1,7 +1,9 @@
+const { Op } = require("sequelize");
 const createError = require("http-errors");
 const {
-  summarizeAdjustments,
-  calculateAdjustments,
+  processInventory,
+  mergeStats,
+  formatTotals,
 } = require("../utils/calculation");
 
 class StatsService {
@@ -10,161 +12,186 @@ class StatsService {
     this.ShowInventory = db.ShowInventory;
     this.Adjustment = db.Adjustment;
     this.Product = db.Product;
+    this.Tour = db.Tour;
+    this.Artist = db.Artist;
   }
 
-  // Get statistics for a single show
-  async getShowStats(showId) {
-    const inventories = await this.ShowInventory.findAll({
-      where: { showId },
-      include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
-    });
+  // Fetch inventories with optional filtering for null endInventory
+  async fetchInventories(
+    showId,
+    productId = null,
+    skipNullEndInventory = false
+  ) {
+    const where = { showId };
+    if (productId) where.productId = productId;
+    if (skipNullEndInventory) where.endInventory = { [Op.not]: null };
 
-    const productStats = await Promise.all(
+    return await this.ShowInventory.findAll({
+      where,
+      include: [
+        {
+          model: this.Product,
+          attributes: ["id", "name", "price", "size", "color"],
+        },
+      ],
+    });
+  }
+
+  // Process inventories
+  async processInventories(inventories) {
+    return await Promise.all(
       inventories.map(async (inventory) => {
+        // Fetch and process adjustments related to the inventory
         const adjustments = await this.Adjustment.findAll({
           where: { showInventoryId: inventory.id },
         });
+        return processInventory(inventory, adjustments);
+      })
+    );
+  }
 
-        const price = parseFloat(inventory.Product.price);
-        const { restock, giveaway, loss, discount, totalDiscount } =
-          summarizeAdjustments(adjustments, price);
+  // Get stats for a single show
+  async getShowStats(showId) {
+    const show = await this.Show.findByPk(showId, {
+      attributes: ["id", "date", "venue", "city", "country"],
+      include: {
+        model: this.Tour,
+        attributes: { exclude: ["artistId", "createdBy"] },
+        include: {
+          model: this.Artist,
+        },
+      },
+    });
 
-        // Calculate sold
-        const endInventory = inventory.endInventory ?? 0;
-        const adjustedStart =
-          inventory.startInventory + restock - giveaway - loss;
-        const sold = adjustedStart - endInventory;
+    const inventories = await this.fetchInventories(showId);
 
-        // Calculate revenues
-        const revenue = sold * price;
-        const netRevenue = revenue - totalDiscount;
+    if (!inventories.length) {
+      throw createError(404, "No inventories found for the show");
+    }
 
-        return {
-          productId: inventory.productId,
-          productName: inventory.Product.name,
-          startInventory: inventory.startInventory,
-          endInventory: inventory.endInventory,
-          sold,
-          adjustments: {
-            restock,
-            giveaway,
-            loss,
-            discount,
-          },
-          revenue: parseFloat(revenue.toFixed(2)),
-          totalDiscount: parseFloat(totalDiscount.toFixed(2)),
-          netRevenue: parseFloat(netRevenue.toFixed(2)),
-        };
+    if (inventories.some((inventory) => inventory.endInventory === null)) {
+      throw createError(
+        400,
+        "Cannot calculate stats for this show, because at least one endInventory is null"
+      );
+    }
+    // Process inventories and calculate totals
+    const productStats = await this.processInventories(inventories);
+    const totals = mergeStats(productStats);
+
+    return {
+      Show: show,
+      products: productStats,
+      totals: formatTotals(totals),
+    };
+  }
+
+  // Get stats for all shows in a tour
+  async getTourStats(tourId) {
+    const tour = await this.Tour.findByPk(tourId, {
+      attributes: { exclude: ["artistId", "createdBy"] },
+      include: {
+        model: this.Artist,
+      },
+    });
+
+    const shows = await this.Show.findAll({
+      where: { tourId },
+    });
+
+    if (!shows.length) {
+      throw createError(404, "No shows found for the tour");
+    }
+
+    // Process inventories and calculate totals for each show
+    const allStats = await Promise.all(
+      shows.map(async (show) => {
+        const inventories = await this.fetchInventories(show.id, null, true);
+
+        // Skip if no inventories found
+        if (inventories.length === 0) return null;
+
+        // Process inventories and calculate totals
+        const productStats = await this.processInventories(inventories);
+        const totals = mergeStats(productStats);
+
+        return { Show: show, totals };
       })
     );
 
-    // Calculate totals
-    const totalSold = productStats.reduce((acc, stat) => acc + stat.sold, 0);
-    const totalRevenue = productStats.reduce(
-      (acc, stat) => acc + stat.revenue,
-      0
-    );
-    const totalDiscountAmt = productStats.reduce(
-      (acc, stat) => acc + stat.totalDiscount,
-      0
-    );
-    const totalNetRevenue = productStats.reduce(
-      (acc, stat) => acc + stat.netRevenue,
-      0
-    );
-
-    const totalRestock = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.restock,
-      0
-    );
-    const totalGiveaway = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.giveaway,
-      0
-    );
-    const totalLoss = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.loss,
-      0
-    );
-    const totalDiscountQty = productStats.reduce(
-      (acc, stat) => acc + stat.adjustments.discount,
-      0
-    );
+    // Filter out null stats and calculate grand totals
+    const validStats = allStats.filter(Boolean);
+    const grandTotals = mergeStats(validStats.map((stat) => stat.totals));
 
     return {
-      products: productStats,
-      totals: {
-        sold: totalSold,
-        revenue: parseFloat(totalRevenue.toFixed(2)),
-        totalDiscount: parseFloat(totalDiscountAmt.toFixed(2)),
-        netRevenue: parseFloat(totalNetRevenue.toFixed(2)),
-        adjustments: {
-          restock: totalRestock,
-          giveaway: totalGiveaway,
-          loss: totalLoss,
-          discount: totalDiscountQty,
-        },
+      Tour: {
+        ...tour.toJSON(),
+        numberOfShows: shows.length,
       },
+      totals: formatTotals(grandTotals),
     };
   }
 
-  //Get statistics for all shows in a tour
-  async getTourStats(tourId) {
-    const shows = await this.Show.findAll({ where: { tourId } });
+  // Get stats for a product in a tour
+  async getProductStatsForTour(productId, tourId) {
+    const tour = await this.Tour.findByPk(tourId, {
+      attributes: { exclude: ["artistId", "createdBy"] },
+      include: {
+        model: this.Artist,
+      },
+    });
 
-    let grandTotalSold = 0;
-    let grandTotalRevenue = 0;
+    const product = await this.Product.findByPk(productId, {
+      attributes: ["id", "name", "price", "size", "color"],
+    });
 
-    for (const show of shows) {
-      const { totals } = await this.getShowStats(show.id);
-      grandTotalSold += totals.sold;
-      grandTotalRevenue += totals.revenue;
+    const shows = await this.Show.findAll({
+      where: { tourId },
+    });
+
+    if (!shows.length) {
+      throw createError(404, "No shows found for the tour");
     }
+    // Process each show to calculate product stats
+    const allStats = await Promise.all(
+      shows.map(async (show) => {
+        const inventories = await this.fetchInventories(
+          show.id,
+          productId,
+          true
+        );
+
+        // Skip shows with no valid inventories
+        if (!inventories.length) return null;
+
+        // Process inventories and return product stats
+        const productStats = await this.processInventories(inventories);
+        return productStats;
+      })
+    );
+
+    // Filter out null stats
+    const validStats = allStats.flat().filter(Boolean);
+
+    // If no valid inventories exist for this product
+    if (!validStats.length) {
+      throw createError(
+        404,
+        "No inventories exist for this product in the tour or all endInventory are null"
+      );
+    }
+
+    // Calculate totals for the product
+    const totals = mergeStats(validStats);
 
     return {
-      tourId,
-      sold: grandTotalSold,
-      revenue: parseFloat(grandTotalRevenue.toFixed(2)),
+      Tour: {
+        ...tour.toJSON(),
+        numberOfShows: shows.length,
+      },
+      Product: product,
+      totals: formatTotals(totals),
     };
-  }
-
-  // Get total sales for a specific product across all shows in a tour
-  async getProductStatsForTour(productId, tourId) {
-    // Check if product exists
-    const product = await this.Product.findByPk(productId);
-    if (!product) throw createError(404, "Product not found");
-
-    const shows = await this.Show.findAll({ where: { tourId } });
-    let totalSold = 0;
-    let totalRevenue = 0;
-    let productName = null;
-
-    for (const show of shows) {
-      // Get inventories for this product in the show
-      const inventories = await this.ShowInventory.findAll({
-        where: { showId: show.id, productId },
-        include: [{ model: this.Product, attributes: ["id", "name", "price"] }],
-      });
-
-      for (const inventory of inventories) {
-        const adjustments = await this.Adjustment.findAll({
-          where: { showInventoryId: inventory.id },
-        });
-
-        const netAdjustment = calculateAdjustments(adjustments);
-
-        const endInventory = inventory.endInventory ?? 0;
-        const sold = inventory.startInventory + netAdjustment - endInventory;
-        const revenue = sold * parseFloat(inventory.Product.price);
-
-        totalSold += sold;
-        totalRevenue += revenue;
-        if (!productName) {
-          productName = inventory.Product.name;
-        }
-      }
-    }
-
-    return { productId, productName, tourId, totalSold, totalRevenue };
   }
 }
 
