@@ -61,9 +61,9 @@ FLUSH PRIVILEGES;
 
    The appropriate values should already be set, except the token, which you need to create:
 
-   1. Open you terminal and start node: `node`
-   2. Type `require('crypto').randomBytes(64).toString('hex')`
-   3. Copy the token to .env where it says `TOKEN_SECRET=`
+1. Open you terminal and start node: `node`
+1. Type `require('crypto').randomBytes(64).toString('hex')`
+1. Copy the token to .env where it says `TOKEN_SECRET=`
 
    - `ADMIN_USERNAME`: The username for the admin
    - `ADMIN_PASSWORD`: The password for the admin
@@ -85,7 +85,7 @@ FLUSH PRIVILEGES;
 
    This might be easier to test if you change the `base_url` collection variable in the [Postman Collection](https://www.postman.com/wolfzkin/workspace/merchandizer/collection/14878277-b26761a4-e2dd-4640-82b1-1ddc303bc8a2?action=share&creator=14878277) to `https://merchandizer.onrender.com` and test it on the deployed production environment.
 
-5. ### Run the Application
+1. ### Run the Application
 
    Start the application using the following command:
 
