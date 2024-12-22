@@ -146,3 +146,4 @@ This is not available in the production deployment since you dont need to be aut
 [API Best Practices](https://apibestpractices.info/url-design/nested-resources)
 [router.param](https://javascript.plainenglish.io/using-param-middleware-in-express-simplifying-route-validation-36e939635567)
 [Postman to Swagger](https://www.postman.com/postman/postman-public-workspace/documentation/ijkf7ei/postman-to-swagger-oas-2)
+[ChatGPT](https://chat.openai.com)
