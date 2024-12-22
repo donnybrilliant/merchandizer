@@ -61,29 +61,29 @@ FLUSH PRIVILEGES;
 
    The appropriate values should already be set, except the token, which you need to create:
 
-1. Open you terminal and start node: `node`
-1. Type `require('crypto').randomBytes(64).toString('hex')`
-1. Copy the token to .env where it says `TOKEN_SECRET=`
+- Open you terminal and start node: `node`
+- Type `require('crypto').randomBytes(64).toString('hex')`
+- Copy the token to .env where it says `TOKEN_SECRET=`
 
-   - `ADMIN_USERNAME`: The username for the admin
-   - `ADMIN_PASSWORD`: The password for the admin
-   - `DATABASE_NAME`: The name of the database
-   - `DATABASE_PORT`: The port of the database
-   - `DIALECT`: The database dialect to use
-   - `PORT`: The port on which the application will run
-   - `HOST`: The host for the database connection
-   - `TOKEN_SECRET`: A secret key used for signing JWT tokens
-   - `AWS_ACCESS_KEY_ID`: Your AWS access key ID, which is used to authenticate requests to AWS services
-   - `AWS_SECRET_ACCESS_KEY`: Your AWS secret access key, which is used with the access key ID to sign requests
-   - `AWS_S3_BUCKET_NAME`: The name of the S3 bucket where your application will store and retrieve files
-   - `AWS_REGION`: The AWS region where your S3 bucket is located
+  - `ADMIN_USERNAME`: The username for the admin
+  - `ADMIN_PASSWORD`: The password for the admin
+  - `DATABASE_NAME`: The name of the database
+  - `DATABASE_PORT`: The port of the database
+  - `DIALECT`: The database dialect to use
+  - `PORT`: The port on which the application will run
+  - `HOST`: The host for the database connection
+  - `TOKEN_SECRET`: A secret key used for signing JWT tokens
+  - `AWS_ACCESS_KEY_ID`: Your AWS access key ID, which is used to authenticate requests to AWS services
+  - `AWS_SECRET_ACCESS_KEY`: Your AWS secret access key, which is used with the access key ID to sign requests
+  - `AWS_S3_BUCKET_NAME`: The name of the S3 bucket where your application will store and retrieve files
+  - `AWS_REGION`: The AWS region where your S3 bucket is located
 
-   #### Optional:
+  #### Optional:
 
-   For testing image uploading for product images and user avatars, set up your own AWS S3 Bucket.
-   Login [here](https://console.aws.amazon.com/console/home?nc2=h_ct&src=header-signin) and follow [this guide](https://medium.com/@shivam97.dawar/easy-and-simple-4-steps-to-upload-images-to-aws-s3-bucket-through-node-js-server-using-express-5f1095fcc485)
+  For testing image uploading for product images and user avatars, set up your own AWS S3 Bucket.
+  Login [here](https://console.aws.amazon.com/console/home?nc2=h_ct&src=header-signin) and follow [this guide](https://medium.com/@shivam97.dawar/easy-and-simple-4-steps-to-upload-images-to-aws-s3-bucket-through-node-js-server-using-express-5f1095fcc485)
 
-   This might be easier to test if you change the `base_url` collection variable in the [Postman Collection](https://www.postman.com/wolfzkin/workspace/merchandizer/collection/14878277-b26761a4-e2dd-4640-82b1-1ddc303bc8a2?action=share&creator=14878277) to `https://merchandizer.onrender.com` and test it on the deployed production environment.
+  This might be easier to test if you change the `base_url` collection variable in the [Postman Collection](https://www.postman.com/wolfzkin/workspace/merchandizer/collection/14878277-b26761a4-e2dd-4640-82b1-1ddc303bc8a2?action=share&creator=14878277) to `https://merchandizer.onrender.com` and test it on the deployed production environment.
 
 1. ### Run the Application
 
