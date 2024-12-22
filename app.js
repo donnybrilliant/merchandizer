@@ -12,6 +12,7 @@ const toursRouter = require("./routes/tours");
 const categoriesRouter = require("./routes/categories");
 const productsRouter = require("./routes/products");
 const statsRouter = require("./routes/stats");
+const initRouter = require("./routes/init");
 
 // Sync database
 db.sequelize.sync({ force: false });
@@ -32,6 +33,7 @@ app.use("/tours", toursRouter);
 app.use("/categories", categoriesRouter);
 app.use("/products", productsRouter);
 app.use("/stats", statsRouter);
+app.use("/init", initRouter);
 
 // Error handling
 app.use(notFoundHandler);
